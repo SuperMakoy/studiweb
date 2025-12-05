@@ -195,9 +195,9 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
   if (!file) return <div className="flex items-center justify-center h-screen">File not found</div>
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="md:flex h-screen bg-white">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pt-16 md:pt-0">
         <DashboardHeader showSearch={false} />
         <div className="p-4 md:p-8">
           <div className="mb-6 md:mb-8">
@@ -236,7 +236,7 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
               {file.fileType === "application/pdf" ? (
                 <iframe
                   src={fileObjectUrl}
-                  className="w-full h-64 md:h-96 rounded-lg border border-gray-300"
+                  className="w-full h-64 sm:h-80 md:h-96 rounded-lg border border-gray-300"
                   title="PDF Preview"
                 />
               ) : file.fileType === "text/plain" ? (
@@ -255,7 +255,7 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
             <button
               onClick={handleStartQuiz}
               disabled={generatingQuiz}
@@ -300,7 +300,7 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
               <>
                 <div className="mb-8">
                   <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Recent Attempts (Last 6)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {fileQuizHistory.slice(0, 6).map((quiz) => (
                       <QuizHistoryCard key={quiz.id} quiz={quiz} showFileName={false} />
                     ))}
@@ -322,7 +322,7 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
                           moderate: { label: "Moderate", color: "#FFD43B" },
                           hard: { label: "Hard", color: "#FF6B6B" },
                         }}
-                        className="h-[250px] md:h-[300px]"
+                        className="h-[200px] sm:h-[250px] md:h-[300px]"
                       >
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
@@ -360,7 +360,7 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
                         config={{
                           avgScore: { label: "Avg Score %", color: "#5B6EE8" },
                         }}
-                        className="h-[250px] md:h-[300px]"
+                        className="h-[200px] sm:h-[250px] md:h-[300px]"
                       >
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={averageScoresByDifficulty}>

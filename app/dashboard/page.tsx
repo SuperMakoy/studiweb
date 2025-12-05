@@ -36,9 +36,9 @@ export default function DashboardPage() {
   }, [user, loading])
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="md:flex h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
         <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <SmartFileSearch
             files={files}

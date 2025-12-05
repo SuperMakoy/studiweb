@@ -7,10 +7,10 @@ export default function StudyAiPage() {
   const { user } = useAuth()
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="md:flex h-screen bg-gray-50">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
         <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex items-center justify-between">
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">Study with AI</h1>
 

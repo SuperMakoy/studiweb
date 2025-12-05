@@ -59,8 +59,8 @@ export default function QuizPage() {
       <div className="min-h-screen bg-[#5B6EE8] flex items-center justify-center p-4">
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-lg font-semibold">Generating your quiz...</p>
-          <p className="text-sm opacity-75 mt-2">
+          <p className="text-base md:text-lg font-semibold">Generating your quiz...</p>
+          <p className="text-xs md:text-sm opacity-75 mt-2">
             This may take a few moments while we extract and analyze your study material
           </p>
         </div>
@@ -71,10 +71,10 @@ export default function QuizPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-[#5B6EE8] flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg p-8 max-w-md text-center">
-          <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
-          <p className="text-gray-700 mb-6">{error}</p>
-          <a href="/file-library" className="text-[#5B6EE8] hover:underline font-semibold">
+        <div className="bg-white rounded-lg p-6 md:p-8 max-w-md w-full text-center">
+          <h2 className="text-xl md:text-2xl font-bold text-red-500 mb-4">Error</h2>
+          <p className="text-sm md:text-base text-gray-700 mb-6">{error}</p>
+          <a href="/file-library" className="text-[#5B6EE8] hover:underline font-semibold text-sm md:text-base">
             Back to File Library
           </a>
         </div>
@@ -85,12 +85,12 @@ export default function QuizPage() {
   if (!quiz || quiz.questions.length === 0) {
     return (
       <div className="min-h-screen bg-[#5B6EE8] flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg p-8 max-w-md text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">No Questions Generated</h2>
-          <p className="text-gray-700 mb-6">
+        <div className="bg-white rounded-lg p-6 md:p-8 max-w-md w-full text-center">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">No Questions Generated</h2>
+          <p className="text-sm md:text-base text-gray-700 mb-6">
             Could not generate quiz questions from this file. Please try another file.
           </p>
-          <a href="/file-library" className="text-[#5B6EE8] hover:underline font-semibold">
+          <a href="/file-library" className="text-[#5B6EE8] hover:underline font-semibold text-sm md:text-base">
             Back to File Library
           </a>
         </div>

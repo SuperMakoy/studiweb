@@ -39,29 +39,29 @@ export default function DashboardPage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+        <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <SmartFileSearch
             files={files}
             onSelectFile={(fileId) => (window.location.href = `/file-library/${fileId}`)}
           />
 
-          <div className="flex items-center gap-3 ml-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-base md:text-lg">
               M
             </div>
-            <span className="text-gray-900 font-semibold">Makoy</span>
+            <span className="text-gray-900 font-semibold text-sm md:text-base">Makoy</span>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-8">
-          <div className="max-w-7xl mx-auto space-y-8">
+        <div className="flex-1 overflow-auto p-4 md:p-8">
+          <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
             <WelcomeBanner />
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Recently opened Files</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Recently opened Files</h2>
               <RecentlyOpenedFiles />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Quiz game history Score</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Quiz game history Score</h2>
               <QuizHistory />
             </div>
           </div>

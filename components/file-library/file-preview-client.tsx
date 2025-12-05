@@ -199,26 +199,31 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
       <Sidebar />
       <main className="flex-1 overflow-auto">
         <DashboardHeader showSearch={false} />
-        <div className="p-8">
-          <div className="mb-8">
-            <Link href="/file-library" className="text-[#5B6EE8] hover:underline mb-4 inline-block">
+        <div className="p-4 md:p-8">
+          <div className="mb-6 md:mb-8">
+            <Link
+              href="/file-library"
+              className="text-[#5B6EE8] hover:underline mb-4 inline-block text-sm md:text-base"
+            >
               ← Back to File Library
             </Link>
 
-            <div className="flex items-start gap-6 mb-8">
-              <div className="w-32 h-32 bg-gradient-to-br from-yellow-300 to-yellow-400 rounded-2xl flex items-center justify-center text-7xl flex-shrink-0">
+            <div className="flex flex-col sm:flex-row items-start gap-4 md:gap-6 mb-6 md:mb-8">
+              <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-yellow-300 to-yellow-400 rounded-2xl flex items-center justify-center text-5xl md:text-7xl flex-shrink-0">
                 📁
               </div>
 
               <div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">{file.displayName || file.fileName}</h1>
-                <p className="text-gray-600 mb-1">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                  {file.displayName || file.fileName}
+                </h1>
+                <p className="text-sm md:text-base text-gray-600 mb-1">
                   <strong>File Size:</strong> {formatFileSize(file.fileSize)}
                 </p>
-                <p className="text-gray-600 mb-1">
+                <p className="text-sm md:text-base text-gray-600 mb-1">
                   <strong>Uploaded:</strong> {new Date(file.uploadedAt).toLocaleDateString()}
                 </p>
-                <p className="text-gray-600">
+                <p className="text-sm md:text-base text-gray-600">
                   <strong>File Type:</strong> {file.fileType || "Unknown"}
                 </p>
               </div>
@@ -226,75 +231,75 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
           </div>
 
           {fileObjectUrl && (
-            <div className="mb-12 bg-gray-50 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">File Preview</h2>
+            <div className="mb-8 md:mb-12 bg-gray-50 rounded-xl p-4 md:p-6">
+              <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">File Preview</h2>
               {file.fileType === "application/pdf" ? (
                 <iframe
                   src={fileObjectUrl}
-                  className="w-full h-96 rounded-lg border border-gray-300"
+                  className="w-full h-64 md:h-96 rounded-lg border border-gray-300"
                   title="PDF Preview"
                 />
               ) : file.fileType === "text/plain" ? (
-                <div className="bg-white p-4 rounded-lg border border-gray-300 overflow-auto max-h-96 text-sm whitespace-pre-wrap break-words font-mono">
+                <div className="bg-white p-4 rounded-lg border border-gray-300 overflow-auto max-h-64 md:max-h-96 text-xs md:text-sm whitespace-pre-wrap break-words font-mono">
                   <TextFileViewer fileObjectUrl={fileObjectUrl} />
                 </div>
               ) : file.fileType?.includes("wordprocessingml") || file.fileType === "application/msword" ? (
-                <div className="bg-white p-4 rounded-lg border border-gray-300 text-gray-600">
+                <div className="bg-white p-4 rounded-lg border border-gray-300 text-gray-600 text-sm md:text-base">
                   <p>Word document preview not available. Click "Start Quiz" to generate a quiz from this file.</p>
                 </div>
               ) : (
-                <div className="bg-white p-4 rounded-lg border border-gray-300 text-gray-600">
+                <div className="bg-white p-4 rounded-lg border border-gray-300 text-gray-600 text-sm md:text-base">
                   <p>Preview not available for this file type.</p>
                 </div>
               )}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
             <button
               onClick={handleStartQuiz}
               disabled={generatingQuiz}
-              className="w-full bg-[#5B6EE8] hover:bg-[#4a5ad3] disabled:bg-[#3a4ab3] text-white font-bold py-6 px-8 rounded-xl transition transform hover:scale-105"
+              className="w-full bg-[#5B6EE8] hover:bg-[#4a5ad3] disabled:bg-[#3a4ab3] text-white font-bold py-4 md:py-6 px-6 md:px-8 rounded-xl transition transform hover:scale-105"
             >
-              <div className="text-2xl mb-2">{generatingQuiz ? "⏳" : "🎮"}</div>
-              {generatingQuiz ? "Preparing..." : "Start Quiz"}
+              <div className="text-xl md:text-2xl mb-2">{generatingQuiz ? "⏳" : "🎮"}</div>
+              <span className="text-sm md:text-base">{generatingQuiz ? "Preparing..." : "Start Quiz"}</span>
             </button>
 
             <button
-              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-6 px-8 rounded-xl transition transform hover:scale-105"
+              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 md:py-6 px-6 md:px-8 rounded-xl transition transform hover:scale-105"
               disabled
             >
-              <div className="text-2xl mb-2">🤖</div>
-              Study with Ai
+              <div className="text-xl md:text-2xl mb-2">🤖</div>
+              <span className="text-sm md:text-base">Study with Ai</span>
               <p className="text-xs mt-1 opacity-75">(Coming Soon)</p>
             </button>
 
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-bold py-6 px-8 rounded-xl transition transform hover:scale-105"
+              className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-bold py-4 md:py-6 px-6 md:px-8 rounded-xl transition transform hover:scale-105"
             >
-              <div className="text-2xl mb-2">🗑️</div>
-              {deleting ? "Deleting..." : "Delete"}
+              <div className="text-xl md:text-2xl mb-2">🗑️</div>
+              <span className="text-sm md:text-base">{deleting ? "Deleting..." : "Delete"}</span>
             </button>
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Previous Quiz Stats</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Previous Quiz Stats</h2>
             {loadingStats ? (
-              <div className="bg-gray-100 rounded-xl p-8 text-center">
-                <p className="text-gray-600">Loading quiz history...</p>
+              <div className="bg-gray-100 rounded-xl p-6 md:p-8 text-center">
+                <p className="text-gray-600 text-sm md:text-base">Loading quiz history...</p>
               </div>
             ) : fileQuizHistory.length === 0 ? (
-              <div className="bg-gray-100 rounded-xl p-8 text-center">
-                <p className="text-gray-600">
+              <div className="bg-gray-100 rounded-xl p-6 md:p-8 text-center">
+                <p className="text-gray-600 text-sm md:text-base">
                   No quiz attempts yet for this file. Start a quiz to see your stats here!
                 </p>
               </div>
             ) : (
               <>
                 <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Attempts (Last 6)</h3>
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Recent Attempts (Last 6)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {fileQuizHistory.slice(0, 6).map((quiz) => (
                       <QuizHistoryCard key={quiz.id} quiz={quiz} showFileName={false} />
@@ -302,11 +307,13 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mt-8">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Difficulty Distribution</CardTitle>
-                      <CardDescription>Quiz attempts by difficulty level</CardDescription>
+                      <CardTitle className="text-base md:text-lg">Difficulty Distribution</CardTitle>
+                      <CardDescription className="text-xs md:text-sm">
+                        Quiz attempts by difficulty level
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ChartContainer
@@ -315,7 +322,7 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
                           moderate: { label: "Moderate", color: "#FFD43B" },
                           hard: { label: "Hard", color: "#FF6B6B" },
                         }}
-                        className="h-[300px]"
+                        className="h-[250px] md:h-[300px]"
                       >
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
@@ -343,15 +350,17 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Average Scores by Difficulty</CardTitle>
-                      <CardDescription>Your average performance for each difficulty level</CardDescription>
+                      <CardTitle className="text-base md:text-lg">Average Scores by Difficulty</CardTitle>
+                      <CardDescription className="text-xs md:text-sm">
+                        Your average performance for each difficulty level
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ChartContainer
                         config={{
                           avgScore: { label: "Avg Score %", color: "#5B6EE8" },
                         }}
-                        className="h-[300px]"
+                        className="h-[250px] md:h-[300px]"
                       >
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={averageScoresByDifficulty}>

@@ -1,0 +1,65 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <rect width="400" height="400" fill="url(#heroGradient)"/>
+  <defs>
+    <linearGradient id="heroGradient" x1="0" y1="0" x2="400" y2="400">
+      <stop offset="0%" stop-color="#E8F4FF"/>
+      <stop offset="100%" stop-color="#F5D5C8"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Desk -->
+  <ellipse cx="200" cy="340" rx="150" ry="20" fill="#C4C4C4" opacity="0.3"/>
+  <rect x="80" y="280" width="240" height="60" rx="8" fill="#8B7355"/>
+  
+  <!-- Laptop -->
+  <rect x="140" y="240" width="120" height="80" rx="6" fill="#4A5AC9"/>
+  <rect x="148" y="248" width="104" height="60" rx="3" fill="#E8F4FF"/>
+  <rect x="155" y="255" width="40" height="4" rx="2" fill="#5B6EE8" opacity="0.4"/>
+  <rect x="155" y="265" width="60" height="4" rx="2" fill="#5B6EE8" opacity="0.4"/>
+  <rect x="155" y="275" width="50" height="4" rx="2" fill="#5B6EE8" opacity="0.4"/>
+  
+  <!-- Books Stack -->
+  <rect x="100" y="260" width="30" height="8" rx="2" fill="#FF6B6B"/>
+  <rect x="100" y="250" width="30" height="8" rx="2" fill="#51CF66"/>
+  <rect x="100" y="240" width="30" height="8" rx="2" fill="#FFD43B"/>
+  
+  <!-- Coffee Cup -->
+  <ellipse cx="285" cy="268" rx="12" ry="4" fill="#8B7355"/>
+  <rect x="273" y="250" width="24" height="18" rx="2" fill="#5B6EE8"/>
+  <path d="M297 255 L305 255 Q310 255 310 260 Q310 265 305 265 L297 265" stroke="#4A5AC9" stroke-width="2" fill="none"/>
+  
+  <!-- Person -->
+  <!-- Head -->
+  <circle cx="200" cy="180" r="35" fill="#FFD4A3"/>
+  
+  <!-- Hair -->
+  <path d="M170 175 Q165 160 175 150 Q185 145 200 145 Q215 145 225 150 Q235 160 230 175 Q228 165 220 160 Q210 155 200 155 Q190 155 180 160 Q172 165 170 175" fill="#4A3428"/>
+  
+  <!-- Eyes -->
+  <circle cx="190" cy="180" r="3" fill="#2C2C2C"/>
+  <circle cx="210" cy="180" r="3" fill="#2C2C2C"/>
+  
+  <!-- Smile -->
+  <path d="M185 195 Q200 202 215 195" stroke="#2C2C2C" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Body -->
+  <path d="M165 215 Q200 210 235 215 L235 260 Q200 265 165 260 Z" fill="#5B6EE8"/>
+  
+  <!-- Arms -->
+  <path d="M165 220 L145 245 L150 250 L170 225" fill="#FFD4A3"/>
+  <path d="M235 220 L255 245 L250 250 L230 225" fill="#FFD4A3"/>
+  
+  <!-- Hand pointing at laptop -->
+  <ellipse cx="210" cy="240" rx="8" ry="10" fill="#FFD4A3"/>
+  
+  <!-- Decorative elements -->
+  <circle cx="320" cy="120" r="20" fill="#FFD43B" opacity="0.6"/>
+  <circle cx="80" cy="140" r="15" fill="#51CF66" opacity="0.6"/>
+  <path d="M340 200 L345 210 L355 210 L347 217 L350 227 L340 220 L330 227 L333 217 L325 210 L335 210 Z" fill="#FF6B6B" opacity="0.7"/>
+  
+  <!-- Floating book icon -->
+  <rect x="70" y="100" width="20" height="26" rx="2" fill="#5B6EE8" opacity="0.5"/>
+  <rect x="73" y="105" width="14" height="2" rx="1" fill="#FFFFFF" opacity="0.8"/>
+  <rect x="73" y="110" width="14" height="2" rx="1" fill="#FFFFFF" opacity="0.8"/>
+</svg>

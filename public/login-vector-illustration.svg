@@ -1,0 +1,58 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="400" fill="url(#loginGradient)"/>
+  <defs>
+    <linearGradient id="loginGradient" x1="0" y1="0" x2="400" y2="400">
+      <stop offset="0%" stop-color="#E8F4FF"/>
+      <stop offset="100%" stop-color="#F0E8FF"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Computer Monitor -->
+  <rect x="120" y="180" width="160" height="120" rx="8" fill="#4A5AC9"/>
+  <rect x="130" y="190" width="140" height="90" rx="4" fill="#FFFFFF"/>
+  
+  <!-- Login Screen UI -->
+  <circle cx="200" cy="220" r="20" fill="#5B6EE8" opacity="0.2"/>
+  <path d="M200 210 L200 230 M190 220 L210 220" stroke="#5B6EE8" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Input fields representation -->
+  <rect x="145" y="245" width="110" height="8" rx="4" fill="#E0E0E0"/>
+  <rect x="145" y="260" width="110" height="8" rx="4" fill="#E0E0E0"/>
+  
+  <!-- Monitor Stand -->
+  <rect x="190" y="300" width="20" height="30" fill="#4A5AC9"/>
+  <ellipse cx="200" cy="330" rx="40" ry="8" fill="#4A5AC9"/>
+  
+  <!-- Person waving -->
+  <circle cx="200" cy="110" r="30" fill="#FFD4A3"/>
+  
+  <!-- Hair -->
+  <path d="M175 105 Q170 90 180 85 Q190 80 200 80 Q210 80 220 85 Q230 90 225 105" fill="#6B4E3D"/>
+  
+  <!-- Eyes -->
+  <circle cx="192" cy="108" r="3" fill="#2C2C2C"/>
+  <circle cx="208" cy="108" r="3" fill="#2C2C2C"/>
+  
+  <!-- Happy smile -->
+  <path d="M188 120 Q200 128 212 120" stroke="#2C2C2C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  
+  <!-- Body -->
+  <path d="M170 140 Q200 135 230 140 L230 180 Q200 185 170 180 Z" fill="#51CF66"/>
+  
+  <!-- Waving arm -->
+  <path d="M230 145 L260 130 L265 135 L235 150" fill="#FFD4A3"/>
+  <ellipse cx="267" cy="132" rx="8" ry="10" transform="rotate(-30 267 132)" fill="#FFD4A3"/>
+  
+  <!-- Other arm -->
+  <path d="M170 145 L155 165 L160 170 L175 150" fill="#FFD4A3"/>
+  
+  <!-- Welcome elements -->
+  <path d="M320 140 L325 150 L335 150 L327 157 L330 167 L320 160 L310 167 L313 157 L305 150 L315 150 Z" fill="#FFD43B"/>
+  <circle cx="80" cy="160" r="18" fill="#FF6B6B" opacity="0.6"/>
+  <circle cx="340" cy="240" r="15" fill="#51CF66" opacity="0.6"/>
+  
+  <!-- Checkmark badge -->
+  <circle cx="280" cy="90" r="25" fill="#51CF66"/>
+  <path d="M270 90 L278 98 L292 82" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

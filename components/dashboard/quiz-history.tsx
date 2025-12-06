@@ -42,7 +42,7 @@ export default function QuizHistory() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5 md:gap-4">
       {quizzes.map((quiz) => (
         <QuizHistoryCard key={quiz.id} quiz={quiz} showFileName={true} />
       ))}

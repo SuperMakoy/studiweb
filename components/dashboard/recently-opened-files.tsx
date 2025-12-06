@@ -47,17 +47,17 @@ export default function RecentlyOpenedFiles() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1.5 md:gap-6">
       {files.map((file) => (
         <Link
           key={file.id}
           href={`/file-library/${file.id}`}
-          className="bg-gray-200 rounded-lg md:rounded-2xl p-3 md:p-6 flex flex-col items-center justify-center hover:shadow-lg transition cursor-pointer group"
+          className="bg-gray-200 rounded-lg md:rounded-2xl p-2 md:p-6 flex flex-col items-center justify-center hover:shadow-lg transition cursor-pointer group"
         >
-          <div className="w-12 h-12 md:w-24 md:h-24 bg-gradient-to-br from-yellow-300 to-yellow-400 rounded-lg md:rounded-xl flex items-center justify-center text-2xl md:text-5xl mb-1 md:mb-4 group-hover:scale-110 transition transform">
+          <div className="w-10 h-10 md:w-24 md:h-24 bg-gradient-to-br from-yellow-300 to-yellow-400 rounded-md md:rounded-xl flex items-center justify-center text-xl md:text-5xl mb-1 md:mb-4 group-hover:scale-110 transition transform">
             📁
           </div>
-          <p className="text-gray-900 font-bold text-xs md:text-lg text-center line-clamp-2">
+          <p className="text-gray-900 font-bold text-[10px] md:text-lg text-center line-clamp-2">
             {file.displayName || file.fileName}
           </p>
         </Link>

@@ -41,29 +41,29 @@ export default function DashboardPage() {
       <MobileHeaderNav />
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden pt-14 md:pt-0">
-        <div className="bg-white border-b border-gray-200 px-3 md:px-8 py-2 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-4">
+        <div className="bg-white border-b border-gray-200 px-2 md:px-8 py-1.5 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-1.5 md:gap-4">
           <SmartFileSearch
             files={files}
             onSelectFile={(fileId) => (window.location.href = `/file-library/${fileId}`)}
           />
 
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 md:w-12 md:h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-xs md:text-lg">
+          <div className="flex items-center gap-1.5">
+            <div className="w-7 h-7 md:w-12 md:h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-xs md:text-lg">
               M
             </div>
             <span className="text-gray-900 font-semibold text-xs md:text-base">Makoy</span>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-2 md:p-8">
-          <div className="max-w-7xl mx-auto space-y-3 md:space-y-8">
+        <div className="flex-1 overflow-auto p-1.5 md:p-8">
+          <div className="max-w-7xl mx-auto space-y-2 md:space-y-8">
             <WelcomeBanner />
             <div>
-              <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-2 md:mb-6">Recently opened Files</h2>
+              <h2 className="text-sm md:text-2xl font-bold text-gray-900 mb-1.5 md:mb-6">Recently opened Files</h2>
               <RecentlyOpenedFiles />
             </div>
             <div>
-              <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-2 md:mb-6">Quiz game history Score</h2>
+              <h2 className="text-sm md:text-2xl font-bold text-gray-900 mb-1.5 md:mb-6">Quiz game history Score</h2>
               <QuizHistory />
             </div>
           </div>

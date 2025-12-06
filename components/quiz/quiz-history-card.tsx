@@ -35,50 +35,50 @@ export default function QuizHistoryCard({ quiz, showFileName = true }: QuizHisto
     <>
       <div
         onClick={() => setIsModalOpen(true)}
-        className="bg-[#5B6EE8] text-white rounded-lg md:rounded-2xl p-2 md:p-5 hover:shadow-xl transition transform hover:scale-105 cursor-pointer"
+        className="bg-[#5B6EE8] text-white rounded-lg md:rounded-2xl p-1.5 md:p-5 hover:shadow-xl transition transform hover:scale-105 cursor-pointer"
       >
-        <div className="flex justify-between items-start mb-2 md:mb-4">
-          <h3 className="text-xs md:text-lg font-bold">Quiz Details</h3>
+        <div className="flex justify-between items-start mb-1.5 md:mb-4">
+          <h3 className="text-[10px] md:text-lg font-bold">Quiz Details</h3>
         </div>
 
         {showFileName && (
-          <div className="mb-2 md:mb-4">
-            <p className="text-[8px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">File Name</p>
-            <p className="text-[10px] md:text-xs font-semibold truncate">{quiz.displayName || quiz.fileName}</p>
+          <div className="mb-1.5 md:mb-4">
+            <p className="text-[7px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">File Name</p>
+            <p className="text-[9px] md:text-xs font-semibold truncate">{quiz.displayName || quiz.fileName}</p>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-2 md:gap-4 mb-2 md:mb-4">
+        <div className="grid grid-cols-2 gap-1.5 md:gap-4 mb-1.5 md:mb-4">
           <div>
-            <p className="text-[8px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Score</p>
-            <p className="text-base md:text-2xl font-bold">
+            <p className="text-[7px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Score</p>
+            <p className="text-sm md:text-2xl font-bold">
               {quiz.score}/{quiz.totalQuestions}
             </p>
-            <p className="text-xs md:text-lg opacity-90 mt-0.5">{percentage}%</p>
+            <p className="text-[10px] md:text-lg opacity-90 mt-0.5">{percentage}%</p>
           </div>
 
           <div>
-            <p className="text-[8px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Points Earned</p>
-            <p className="text-base md:text-2xl font-bold">{quiz.points || 0}</p>
+            <p className="text-[7px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Points Earned</p>
+            <p className="text-sm md:text-2xl font-bold">{quiz.points || 0}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 md:gap-4">
+        <div className="grid grid-cols-2 gap-1.5 md:gap-4">
           <div>
-            <p className="text-[8px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Time Taken</p>
-            <p className="text-[10px] md:text-base font-semibold">{quiz.timeElapsed}</p>
+            <p className="text-[7px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Time Taken</p>
+            <p className="text-[9px] md:text-base font-semibold">{quiz.timeElapsed}</p>
           </div>
 
           <div>
-            <p className="text-[8px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Difficulty</p>
-            <p className="text-[10px] md:text-base font-semibold">{formatDifficulty(quiz.difficulty || "moderate")}</p>
+            <p className="text-[7px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Difficulty</p>
+            <p className="text-[9px] md:text-base font-semibold">{formatDifficulty(quiz.difficulty || "moderate")}</p>
           </div>
         </div>
 
         {quiz.completedAt && (
-          <div className="mt-2 md:mt-4 pt-2 md:pt-4 border-t border-white border-opacity-20">
-            <p className="text-[8px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Completed On</p>
-            <p className="text-[9px] md:text-xs">
+          <div className="mt-1.5 md:mt-4 pt-1.5 md:pt-4 border-t border-white border-opacity-20">
+            <p className="text-[7px] md:text-[10px] opacity-70 uppercase tracking-wide mb-0.5">Completed On</p>
+            <p className="text-[8px] md:text-xs">
               {new Date(quiz.completedAt).toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",

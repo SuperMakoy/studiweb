@@ -16,6 +16,7 @@ export default function FileUploadButton({ onFileAdd, onError }: FileUploadButto
   const [showModal, setShowModal] = useState(false)
   const [customName, setCustomName] = useState("")
   const [uploadedFile, setUploadedFile] = useState<any>(null)
+  const [showBlockedPopup, setShowBlockedPopup] = useState(false)
   const { user } = useAuth()
 
   const handleClick = () => {
@@ -33,6 +34,19 @@ export default function FileUploadButton({ onFileAdd, onError }: FileUploadButto
 
     const file = files[0]
 
+    const blockedTypes = [
+      "application/pdf",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ]
+    if (blockedTypes.includes(file.type)) {
+      setShowBlockedPopup(true)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+      return
+    }
+
     const maxSize = 1 * 1024 * 1024
     if (file.size > maxSize) {
       onError?.("File size must be less than 1MB for storage")
@@ -40,13 +54,12 @@ export default function FileUploadButton({ onFileAdd, onError }: FileUploadButto
     }
 
     const validTypes = [
-      "application/pdf",
       "text/plain",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ]
     if (!validTypes.includes(file.type)) {
-      onError?.("Only PDF, TXT, and DOC files are supported")
+      onError?.("Only TXT and DOC files are supported")
       return
     }
 
@@ -107,7 +120,7 @@ export default function FileUploadButton({ onFileAdd, onError }: FileUploadButto
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.txt,.doc,.docx"
+        accept=".txt,.doc,.docx"
         onChange={handleFileChange}
         className="hidden"
         disabled={isLoading || showModal}
@@ -119,6 +132,26 @@ export default function FileUploadButton({ onFileAdd, onError }: FileUploadButto
       >
         {isLoading ? "Uploading..." : "+ Add new"}
       </button>
+
+      {showBlockedPopup && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+            <div className="text-center">
+              <div className="text-5xl mb-4">🚫</div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">File Type Not Supported</h2>
+              <p className="text-gray-600 mb-6">
+                PDF and PowerPoint files are not supported at this time. Please upload TXT or DOC files instead.
+              </p>
+              <button
+                onClick={() => setShowBlockedPopup(false)}
+                className="w-full px-4 py-2 bg-[#5B6EE8] text-white rounded-lg hover:bg-[#4A5AC9] font-medium"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">

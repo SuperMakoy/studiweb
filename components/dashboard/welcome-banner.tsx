@@ -16,12 +16,12 @@ export default function WelcomeBanner() {
   }, [])
 
   return (
-    <div className="bg-gradient-to-r from-[#5B6EE8] to-[#7080F0] text-white rounded-2xl md:rounded-3xl p-4 md:p-8 flex items-center justify-between overflow-hidden relative">
+    <div className="bg-gradient-to-r from-[#5B6EE8] to-[#7080F0] text-white rounded-xl md:rounded-3xl p-4 md:p-8 flex items-center justify-between overflow-hidden relative">
       {/* Left Content */}
       <div className="z-10 flex-1">
         <p className="text-xs md:text-sm opacity-80 mb-1 md:mb-2">{currentDate}</p>
         <h2 className="text-xl md:text-4xl font-bold mb-1 md:mb-2">Welcome back, Makoy!</h2>
-        <p className="text-sm md:text-lg opacity-90">Great to see you enjoy learning</p>
+        <p className="text-xs md:text-lg opacity-90">Great to see you enjoy learning</p>
       </div>
 
       <div className="hidden md:block relative w-80 h-64 z-10">

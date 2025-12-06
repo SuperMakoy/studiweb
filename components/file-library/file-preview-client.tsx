@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/hooks/use-auth"
 import Sidebar from "@/components/dashboard/sidebar"
 import DashboardHeader from "@/components/dashboard/header"
+import MobileHeaderNav from "@/components/dashboard/mobile-header-nav"
 import QuizCustomizationModal, { type QuizCustomizationConfig } from "@/components/quiz/quiz-customization-modal"
 import QuizHistoryCard from "@/components/quiz/quiz-history-card"
 import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from "recharts"
@@ -196,6 +197,7 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
 
   return (
     <div className="md:flex h-screen bg-white">
+      <MobileHeaderNav />
       <Sidebar />
       <main className="flex-1 overflow-auto pt-16 md:pt-0">
         <DashboardHeader showSearch={false} />

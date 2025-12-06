@@ -1,6 +1,7 @@
 "use client"
 import { Construction } from "lucide-react"
 import Sidebar from "@/components/dashboard/sidebar"
+import MobileHeaderNav from "@/components/dashboard/mobile-header-nav"
 import { useAuth } from "@/hooks/use-auth"
 
 export default function StudyAiPage() {
@@ -8,6 +9,7 @@ export default function StudyAiPage() {
 
   return (
     <div className="md:flex h-screen bg-gray-50">
+      <MobileHeaderNav />
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { getUserFiles, deleteMultipleFiles } from "@/lib/file-service"
 import { useAuth } from "@/hooks/use-auth"
 import Sidebar from "@/components/dashboard/sidebar"
+import MobileHeaderNav from "@/components/dashboard/mobile-header-nav"
 import FileGrid from "@/components/file-library/file-grid"
 import { Trash2 } from "lucide-react"
 import FileUploadButton from "@/components/file-library/file-upload-button"
@@ -95,6 +96,7 @@ export default function FileLibraryPage() {
   if (isLoading) {
     return (
       <div className="md:flex h-screen bg-white">
+        <MobileHeaderNav />
         <Sidebar />
         <div className="flex-1 flex items-center justify-center pt-16 md:pt-0">
           <div className="text-gray-500">Loading files...</div>
@@ -105,6 +107,7 @@ export default function FileLibraryPage() {
 
   return (
     <div className="md:flex h-screen bg-white">
+      <MobileHeaderNav />
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
         <div className="bg-white border-b border-gray-200 p-4 md:p-6">

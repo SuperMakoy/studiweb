@@ -16,15 +16,15 @@ export default function WelcomeBanner() {
   }, [])
 
   return (
-    <div className="bg-gradient-to-r from-[#5B6EE8] to-[#7080F0] text-white rounded-3xl p-8 flex items-center justify-between overflow-hidden relative">
+    <div className="bg-gradient-to-r from-[#5B6EE8] to-[#7080F0] text-white rounded-2xl md:rounded-3xl p-4 md:p-8 flex items-center justify-between overflow-hidden relative">
       {/* Left Content */}
-      <div className="z-10">
-        <p className="text-sm opacity-80 mb-2">{currentDate}</p>
-        <h2 className="text-4xl font-bold mb-2">Welcome back, Makoy!</h2>
-        <p className="text-lg opacity-90">Great to see you enjoy learning</p>
+      <div className="z-10 flex-1">
+        <p className="text-xs md:text-sm opacity-80 mb-1 md:mb-2">{currentDate}</p>
+        <h2 className="text-xl md:text-4xl font-bold mb-1 md:mb-2">Welcome back, Makoy!</h2>
+        <p className="text-sm md:text-lg opacity-90">Great to see you enjoy learning</p>
       </div>
 
-      <div className="relative w-80 h-64 z-10">
+      <div className="hidden md:block relative w-80 h-64 z-10">
         <svg
           className="absolute right-0 bottom-0"
           width="280"
@@ -109,7 +109,6 @@ export default function WelcomeBanner() {
           />
         </svg>
       </div>
-      {/* </CHANGE> */}
     </div>
   )
 }

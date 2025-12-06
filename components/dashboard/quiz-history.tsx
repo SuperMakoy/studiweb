@@ -34,16 +34,15 @@ export default function QuizHistory() {
   }, [user, authLoading])
 
   if (loadingQuizzes) {
-    return <div className="text-gray-500 text-sm">Loading quiz history...</div>
+    return <div className="text-gray-500 text-xs md:text-sm">Loading quiz history...</div>
   }
 
   if (quizzes.length === 0) {
-    return <div className="text-gray-500 text-sm">No quizzes taken yet. Start with a file!</div>
+    return <div className="text-gray-500 text-xs md:text-sm">No quizzes taken yet. Start with a file!</div>
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-      {/* </CHANGE> */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
       {quizzes.map((quiz) => (
         <QuizHistoryCard key={quiz.id} quiz={quiz} showFileName={true} />
       ))}

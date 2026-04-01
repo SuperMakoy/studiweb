@@ -193,13 +193,28 @@ Rules:
     const groqData = await groqResponse.json()
     const text = groqData.choices[0].message.content
 
-    // Parse the AI response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      throw new Error("Failed to parse AI response as JSON")
-    }
+    console.log("[v0] Raw AI response:", text.substring(0, 500))
 
-    const quizData = JSON.parse(jsonMatch[0])
+    // Parse the AI response - try multiple approaches
+    let quizData
+    try {
+      // First try: direct JSON parse
+      quizData = JSON.parse(text)
+    } catch {
+      // Second try: extract JSON from markdown code blocks
+      const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+      if (codeBlockMatch) {
+        quizData = JSON.parse(codeBlockMatch[1].trim())
+      } else {
+        // Third try: find JSON object in text
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        if (!jsonMatch) {
+          console.error("[v0] Could not find JSON in response:", text)
+          throw new Error("Failed to parse AI response as JSON")
+        }
+        quizData = JSON.parse(jsonMatch[0])
+      }
+    }
 
     // Ensure fileName is set correctly
     quizData.fileName = fileName

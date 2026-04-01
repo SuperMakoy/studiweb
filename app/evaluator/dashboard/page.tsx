@@ -1,16 +1,26 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { getQuizzesForEvaluation, type QuizForEvaluation } from "@/lib/evaluation-service"
-import { FileText, Clock, ChevronRight, LogOut } from "lucide-react"
+import { FileText, Clock, ChevronRight, LogOut, Upload, Loader2 } from "lucide-react"
+
+type Difficulty = "easy" | "moderate" | "hard"
 
 export default function EvaluatorDashboard() {
   const router = useRouter()
   const [quizzes, setQuizzes] = useState<QuizForEvaluation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // File upload state
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [difficulty, setDifficulty] = useState<Difficulty>("moderate")
+  const [questionCount, setQuestionCount] = useState(10)
+  const [generating, setGenerating] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if evaluator is logged in
@@ -33,6 +43,73 @@ export default function EvaluatorDashboard() {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validTypes = [
+      "text/plain",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]
+    if (!validTypes.includes(file.type)) {
+      setGenerateError("Only TXT and DOC/DOCX files are supported")
+      return
+    }
+
+    const maxSize = 1 * 1024 * 1024
+    if (file.size > maxSize) {
+      setGenerateError("File size must be less than 1MB")
+      return
+    }
+
+    setUploadedFile(file)
+    setGenerateError(null)
+  }
+
+  const handleGenerateQuiz = async () => {
+    if (!uploadedFile) return
+
+    setGenerating(true)
+    setGenerateError(null)
+
+    try {
+      // Read file content
+      const content = await uploadedFile.text()
+
+      // Call the API to generate quiz
+      const response = await fetch("/api/generate-quiz-from-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileId: `eval-${Date.now()}`,
+          userId: "evaluator",
+          fileName: uploadedFile.name,
+          difficulty,
+          length: questionCount,
+          content, // Pass content directly for evaluator
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to generate quiz")
+      }
+
+      // Reload quizzes to show the new one
+      await loadQuizzes()
+      setUploadedFile(null)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    } catch (err: any) {
+      setGenerateError(err.message || "Failed to generate quiz")
+      console.error(err)
+    } finally {
+      setGenerating(false)
     }
   }
 
@@ -108,6 +185,104 @@ export default function EvaluatorDashboard() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto py-8 px-8">
+        {/* Generate Quiz Section */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Generate Quiz for Evaluation</h2>
+          <p className="text-gray-600 mb-6">
+            Upload a file to generate a quiz and evaluate its taxonomy alignment.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Left: File Upload */}
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.doc,.docx"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-[#5B6EE8] hover:bg-gray-50 transition"
+              >
+                <Upload className="w-10 h-10 mx-auto text-gray-400 mb-3" />
+                {uploadedFile ? (
+                  <div>
+                    <p className="font-medium text-gray-900">{uploadedFile.name}</p>
+                    <p className="text-sm text-gray-500 mt-1">Click to change file</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-medium text-gray-700">Click to upload a file</p>
+                    <p className="text-sm text-gray-500 mt-1">TXT, DOC, DOCX (max 1MB)</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Settings */}
+            <div className="space-y-4">
+              {/* Difficulty */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                <div className="flex gap-2">
+                  {(["easy", "moderate", "hard"] as Difficulty[]).map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setDifficulty(d)}
+                      className={`flex-1 py-2 px-4 rounded-lg font-medium capitalize transition ${
+                        difficulty === d
+                          ? "bg-[#5B6EE8] text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Question Count */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Questions: {questionCount}
+                </label>
+                <input
+                  type="range"
+                  min="10"
+                  max="50"
+                  step="5"
+                  value={questionCount}
+                  onChange={(e) => setQuestionCount(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5B6EE8]"
+                />
+              </div>
+
+              {/* Generate Button */}
+              <Button
+                onClick={handleGenerateQuiz}
+                disabled={!uploadedFile || generating}
+                className="w-full bg-[#5B6EE8] hover:bg-[#4a5cd6] text-white py-3"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating Quiz...
+                  </>
+                ) : (
+                  "Generate Quiz"
+                )}
+              </Button>
+
+              {generateError && (
+                <p className="text-red-600 text-sm">{generateError}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Quizzes List Section */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Quizzes for Evaluation</h2>
           <p className="text-gray-600 mt-1">

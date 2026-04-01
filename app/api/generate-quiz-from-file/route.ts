@@ -83,25 +83,36 @@ function buildTaxonomyInstructions(distribution: Record<CognitiveLevel, number>)
 
 export async function POST(request: NextRequest) {
   try {
-    const { fileId, userId, length = 10, difficulty = "moderate" } = await request.json()
+    const { fileId, userId, length = 10, difficulty = "moderate", content, fileName: providedFileName } = await request.json()
 
     if (!fileId || !userId) {
       return NextResponse.json({ error: "Missing fileId or userId" }, { status: 400 })
     }
 
-    const fileDoc = doc(db, "users", userId, "files", fileId)
-    const fileSnapshot = await getDoc(fileDoc)
+    let extractedContent: string
+    let fileName: string
 
-    if (!fileSnapshot.exists()) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 })
+    // If content is provided directly (evaluator mode), use it
+    if (content) {
+      extractedContent = content
+      fileName = providedFileName || "Evaluation File"
+    } else {
+      // Normal flow: fetch from Firebase
+      const fileDoc = doc(db, "users", userId, "files", fileId)
+      const fileSnapshot = await getDoc(fileDoc)
+
+      if (!fileSnapshot.exists()) {
+        return NextResponse.json({ error: "File not found" }, { status: 404 })
+      }
+
+      const fileData = fileSnapshot.data()
+      const { fileData: base64Data, fileType, fileName: storedFileName } = fileData
+      fileName = storedFileName
+
+      // Extract content from file
+      console.log("[v0] Extracting content from", fileName)
+      extractedContent = await extractFileContent(base64Data, fileType, fileName)
     }
-
-    const fileData = fileSnapshot.data()
-    const { fileData: base64Data, fileType, fileName } = fileData
-
-    // Extract content from file
-    console.log("[v0] Extracting content from", fileName)
-    const extractedContent = await extractFileContent(base64Data, fileType, fileName)
 
     if (!extractedContent || extractedContent.length === 0) {
       return NextResponse.json({ error: "No content extracted from file" }, { status: 400 })

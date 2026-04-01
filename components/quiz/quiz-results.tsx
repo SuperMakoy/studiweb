@@ -5,6 +5,13 @@ import { useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { saveQuizResult } from "@/lib/file-service"
 
+type CognitiveLevel = "Remember" | "Understand" | "Apply" | "Analyze" | "Evaluate" | "Create"
+
+interface CognitiveLevelStats {
+  total: number
+  correct: number
+}
+
 interface QuizResultsProps {
   score: number
   totalQuestions: number
@@ -12,7 +19,8 @@ interface QuizResultsProps {
   timeElapsed: string
   fileId?: string
   difficulty?: "easy" | "moderate" | "hard"
-  points?: number // Added points prop
+  points?: number
+  cognitiveLevelStats?: Record<CognitiveLevel, CognitiveLevelStats>
 }
 
 export default function QuizResults({
@@ -22,7 +30,8 @@ export default function QuizResults({
   timeElapsed,
   fileId,
   difficulty = "moderate",
-  points = 0, // Added points with default value
+  points = 0,
+  cognitiveLevelStats,
 }: QuizResultsProps) {
   const percentage = Math.round((score / totalQuestions) * 100)
   const hasSaved = useRef(false)
@@ -53,8 +62,36 @@ export default function QuizResults({
         </p>
         <p className="text-2xl font-bold text-[#5B6EE8] mt-3">Total Points: {points}</p>
         <p className="text-lg text-gray-600 mt-2">Time: {timeElapsed}</p>
-        <p className="text-lg text-gray-600 mt-2">Difficulty: {difficulty}</p>
+        <p className="text-lg text-gray-600 mt-2 capitalize">Difficulty: {difficulty}</p>
       </div>
+
+      {/* Cognitive Level Breakdown */}
+      {cognitiveLevelStats && (
+        <div className="bg-white text-gray-900 rounded-2xl p-8 mb-8">
+          <h3 className="text-xl font-bold mb-4">Performance by Cognitive Level</h3>
+          <div className="space-y-3">
+            {(["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"] as CognitiveLevel[]).map((level) => {
+              const stats = cognitiveLevelStats[level]
+              if (stats.total === 0) return null
+              const percent = Math.round((stats.correct / stats.total) * 100)
+              return (
+                <div key={level} className="flex items-center gap-4">
+                  <span className="w-24 text-left font-medium text-gray-700">{level}</span>
+                  <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                    <div
+                      className="h-full bg-[#5B6EE8] transition-all duration-500"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                  <span className="w-20 text-right text-sm text-gray-600">
+                    {stats.correct}/{stats.total} ({percent}%)
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Buttons */}
       <div className="flex gap-4 justify-center">

@@ -5,12 +5,15 @@ import { Button } from "@/components/ui/button"
 import QuizQuestion from "./quiz-question"
 import QuizResults from "./quiz-results"
 
+type CognitiveLevel = "Remember" | "Understand" | "Apply" | "Analyze" | "Evaluate" | "Create"
+
 interface Question {
   id: number
   question: string
   options: string[]
   correctAnswers: number[]
   type: "single" | "multiple"
+  cognitiveLevel?: CognitiveLevel
 }
 
 interface Quiz {
@@ -29,6 +32,12 @@ interface AnswerRecord {
   questionId: number
   isCorrect: boolean
   timeSpent: number
+  cognitiveLevel?: CognitiveLevel
+}
+
+interface CognitiveLevelStats {
+  total: number
+  correct: number
 }
 
 export default function QuizGame({ quiz, fileId, totalTimeMinutes = 15, difficulty = "moderate" }: QuizGameProps) {
@@ -132,6 +141,7 @@ export default function QuizGame({ quiz, fileId, totalTimeMinutes = 15, difficul
         questionId: currentQuestion.id,
         isCorrect,
         timeSpent,
+        cognitiveLevel: currentQuestion.cognitiveLevel,
       },
     ])
 
@@ -172,6 +182,31 @@ export default function QuizGame({ quiz, fileId, totalTimeMinutes = 15, difficul
     return correctCount
   }
 
+  const calculateCognitiveLevelStats = (): Record<CognitiveLevel, CognitiveLevelStats> => {
+    const stats: Record<CognitiveLevel, CognitiveLevelStats> = {
+      Remember: { total: 0, correct: 0 },
+      Understand: { total: 0, correct: 0 },
+      Apply: { total: 0, correct: 0 },
+      Analyze: { total: 0, correct: 0 },
+      Evaluate: { total: 0, correct: 0 },
+      Create: { total: 0, correct: 0 },
+    }
+
+    quiz.questions.forEach((question) => {
+      const level = question.cognitiveLevel || "Remember"
+      stats[level].total++
+
+      const userAnswers = selectedAnswers[question.id] || []
+      const isCorrect =
+        userAnswers.length === question.correctAnswers.length &&
+        userAnswers.every((a) => question.correctAnswers.includes(a))
+
+      if (isCorrect) stats[level].correct++
+    })
+
+    return stats
+  }
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -193,6 +228,7 @@ export default function QuizGame({ quiz, fileId, totalTimeMinutes = 15, difficul
         fileId={fileId}
         difficulty={difficulty}
         points={totalPoints}
+        cognitiveLevelStats={calculateCognitiveLevelStats()}
       />
     )
   }

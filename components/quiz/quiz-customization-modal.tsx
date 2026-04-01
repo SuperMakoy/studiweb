@@ -53,25 +53,23 @@ export default function QuizCustomizationModal({
           </div>
 
           <div className="space-y-8">
-            {/* Quiz Length Selection - Grid of 3 */}
+            {/* Quiz Length Selection - Slider */}
             <div>
-              <label className="block text-lg font-semibold text-gray-900 mb-4">Number of Questions</label>
-              <div className="grid grid-cols-3 gap-3">
-                {[5, 10, 20].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => setLength(num)}
-                    disabled={isLoading}
-                    className={`py-3 px-4 rounded-lg font-bold text-lg transition-all ${
-                      length === num
-                        ? "bg-[#5B6EE8] text-white shadow-lg scale-105"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    } disabled:opacity-50`}
-                  >
-                    {num}
-                  </button>
-                ))}
+              <label className="block text-lg font-semibold text-gray-900 mb-2">Number of Questions</label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="10"
+                  max="50"
+                  step="5"
+                  value={length}
+                  onChange={(e) => setLength(Number(e.target.value))}
+                  disabled={isLoading}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5B6EE8] disabled:opacity-50"
+                />
+                <span className="text-2xl font-bold text-[#5B6EE8] w-12 text-center">{length}</span>
               </div>
+              <p className="text-sm text-gray-500 mt-1">Minimum 10 questions</p>
             </div>
 
             {/* Difficulty Selection */}

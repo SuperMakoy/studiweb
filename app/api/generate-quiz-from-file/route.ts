@@ -4,6 +4,83 @@ import { db } from "@/lib/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { extractFileContent } from "@/lib/file-extraction-service"
 
+// Anderson & Krathwohl Taxonomy distribution percentages
+const TAXONOMY_DISTRIBUTIONS = {
+  easy: {
+    Remember: 0.5,
+    Understand: 0.3,
+    Apply: 0.2,
+    Analyze: 0,
+    Evaluate: 0,
+    Create: 0,
+  },
+  moderate: {
+    Remember: 0.3,
+    Understand: 0.2,
+    Apply: 0.2,
+    Analyze: 0.2,
+    Evaluate: 0.1,
+    Create: 0,
+  },
+  hard: {
+    Remember: 0.2,
+    Understand: 0.2,
+    Apply: 0.2,
+    Analyze: 0.2,
+    Evaluate: 0.1,
+    Create: 0.1,
+  },
+}
+
+type CognitiveLevel = "Remember" | "Understand" | "Apply" | "Analyze" | "Evaluate" | "Create"
+
+function getTaxonomyDistribution(
+  difficulty: "easy" | "moderate" | "hard",
+  totalQuestions: number
+): Record<CognitiveLevel, number> {
+  const percentages = TAXONOMY_DISTRIBUTIONS[difficulty]
+  const distribution: Record<CognitiveLevel, number> = {
+    Remember: 0,
+    Understand: 0,
+    Apply: 0,
+    Analyze: 0,
+    Evaluate: 0,
+    Create: 0,
+  }
+
+  let assigned = 0
+  const levels: CognitiveLevel[] = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]
+
+  // Calculate initial distribution
+  for (const level of levels) {
+    const count = Math.round(percentages[level] * totalQuestions)
+    distribution[level] = count
+    assigned += count
+  }
+
+  // Adjust for rounding errors - add/remove from Remember (always present)
+  if (assigned < totalQuestions) {
+    distribution.Remember += totalQuestions - assigned
+  } else if (assigned > totalQuestions) {
+    distribution.Remember -= assigned - totalQuestions
+  }
+
+  return distribution
+}
+
+function buildTaxonomyInstructions(distribution: Record<CognitiveLevel, number>): string {
+  const lines: string[] = []
+  const levels: CognitiveLevel[] = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]
+
+  for (const level of levels) {
+    if (distribution[level] > 0) {
+      lines.push(`- ${distribution[level]} question(s) at ${level.toUpperCase()} level`)
+    }
+  }
+
+  return lines.join("\n")
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { fileId, userId, length = 10, difficulty = "moderate" } = await request.json()
@@ -31,7 +108,23 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[v0] Generating quiz from extracted content using Groq API")
-    const systemPrompt = `You are an expert educational quiz creator. Create a quiz with ${length} multiple choice questions at ${difficulty} difficulty level based on the provided study material.
+    
+    // Anderson & Krathwohl Taxonomy Distribution based on difficulty
+    const taxonomyDistribution = getTaxonomyDistribution(difficulty, length)
+    const taxonomyInstructions = buildTaxonomyInstructions(taxonomyDistribution)
+    
+    const systemPrompt = `You are an expert educational quiz creator using Anderson & Krathwohl's Revised Bloom's Taxonomy. Create a quiz with ${length} multiple choice questions based on the provided study material.
+
+COGNITIVE LEVELS (Anderson & Krathwohl Taxonomy):
+1. REMEMBER - Recall facts and basic concepts (Define, List, Name, State, Identify)
+2. UNDERSTAND - Explain ideas or concepts (Explain, Summarize, Describe, Interpret)
+3. APPLY - Use information in new situations (Apply, Demonstrate, Solve, Use)
+4. ANALYZE - Draw connections among ideas (Compare, Contrast, Differentiate, Examine)
+5. EVALUATE - Justify a decision or judgment (Justify, Critique, Defend, Judge, Which is best/most effective)
+6. CREATE - Produce new or original work (Design, Propose, Construct, What would you create/combine)
+
+QUESTION DISTRIBUTION FOR THIS QUIZ:
+${taxonomyInstructions}
 
 Return ONLY valid JSON in this format:
 {
@@ -42,18 +135,20 @@ Return ONLY valid JSON in this format:
       "question": "Question text here?",
       "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
       "correctAnswers": [0],
-      "type": "single"
+      "type": "single",
+      "cognitiveLevel": "Remember"
     }
   ]
 }
 
 Rules:
-- Generate exactly ${length} questions
-- Difficulty level: ${difficulty} (easy: basic recall, moderate: comprehension and application, hard: analysis and synthesis)
+- Generate EXACTLY ${length} questions following the distribution above
+- Each question MUST have a "cognitiveLevel" field with one of: "Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"
+- For EVALUATE questions: Use "Which is best/most effective..." or "Judge which..." phrasing
+- For CREATE questions: Use "Which design/plan would best..." or "What combination would..." phrasing
 - Each question should have 4 options
 - correctAnswers array contains the index(es) of correct options (0-3)
 - type should be "single" for one correct answer, "multiple" for multiple correct answers
-- Create questions that test understanding, not just recall
 - Return ONLY valid JSON, no other text`
 
     const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {

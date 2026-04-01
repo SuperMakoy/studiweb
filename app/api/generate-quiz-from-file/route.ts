@@ -1,7 +1,7 @@
 // API route to generate quiz from uploaded file
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/firebase"
-import { doc, getDoc } from "firebase/firestore"
+import { doc, getDoc, collection, addDoc, Timestamp } from "firebase/firestore"
 import { extractFileContent } from "@/lib/file-extraction-service"
 
 // Anderson & Krathwohl Taxonomy distribution percentages
@@ -81,27 +81,101 @@ function buildTaxonomyInstructions(distribution: Record<CognitiveLevel, number>)
   return lines.join("\n")
 }
 
+// Attempt to repair truncated JSON
+function repairJSON(text: string): string {
+  let json = text.trim()
+  
+  // Remove markdown code blocks if present
+  const codeBlockMatch = json.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (codeBlockMatch) {
+    json = codeBlockMatch[1].trim()
+  }
+  
+  // Find the start of JSON
+  const startIndex = json.indexOf('{')
+  if (startIndex === -1) return json
+  json = json.substring(startIndex)
+  
+  // Count brackets to check if JSON is complete
+  let braceCount = 0
+  let bracketCount = 0
+  let inString = false
+  let lastChar = ''
+  
+  for (const char of json) {
+    if (char === '"' && lastChar !== '\\') {
+      inString = !inString
+    }
+    if (!inString) {
+      if (char === '{') braceCount++
+      if (char === '}') braceCount--
+      if (char === '[') bracketCount++
+      if (char === ']') bracketCount--
+    }
+    lastChar = char
+  }
+  
+  // If truncated, try to close it properly
+  if (braceCount > 0 || bracketCount > 0) {
+    // Remove incomplete last question if present
+    const lastQuestionStart = json.lastIndexOf('{"id":')
+    if (lastQuestionStart > 0) {
+      const beforeLastQuestion = json.substring(0, lastQuestionStart)
+      // Check if the question before is complete
+      if (beforeLastQuestion.includes('"cognitiveLevel"')) {
+        json = beforeLastQuestion.trimEnd()
+        if (json.endsWith(',')) {
+          json = json.slice(0, -1)
+        }
+      }
+    }
+    
+    // Close any open brackets/braces
+    while (bracketCount > 0) {
+      json += ']'
+      bracketCount--
+    }
+    while (braceCount > 0) {
+      json += '}'
+      braceCount--
+    }
+  }
+  
+  return json
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { fileId, userId, length = 10, difficulty = "moderate" } = await request.json()
+    const { fileId, userId, length = 10, difficulty = "moderate", content, fileName: providedFileName } = await request.json()
 
     if (!fileId || !userId) {
       return NextResponse.json({ error: "Missing fileId or userId" }, { status: 400 })
     }
 
-    const fileDoc = doc(db, "users", userId, "files", fileId)
-    const fileSnapshot = await getDoc(fileDoc)
+    let extractedContent: string
+    let fileName: string
 
-    if (!fileSnapshot.exists()) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 })
+    // If content is provided directly (evaluator mode), use it
+    if (content) {
+      extractedContent = content
+      fileName = providedFileName || "Evaluation File"
+    } else {
+      // Normal flow: fetch from Firebase
+      const fileDoc = doc(db, "users", userId, "files", fileId)
+      const fileSnapshot = await getDoc(fileDoc)
+
+      if (!fileSnapshot.exists()) {
+        return NextResponse.json({ error: "File not found" }, { status: 404 })
+      }
+
+      const fileData = fileSnapshot.data()
+      const { fileData: base64Data, fileType, fileName: storedFileName } = fileData
+      fileName = storedFileName
+
+      // Extract content from file
+      console.log("[v0] Extracting content from", fileName)
+      extractedContent = await extractFileContent(base64Data, fileType, fileName)
     }
-
-    const fileData = fileSnapshot.data()
-    const { fileData: base64Data, fileType, fileName } = fileData
-
-    // Extract content from file
-    console.log("[v0] Extracting content from", fileName)
-    const extractedContent = await extractFileContent(base64Data, fileType, fileName)
 
     if (!extractedContent || extractedContent.length === 0) {
       return NextResponse.json({ error: "No content extracted from file" }, { status: 400 })
@@ -170,7 +244,7 @@ Rules:
           },
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 4096,
       }),
     })
 
@@ -182,16 +256,47 @@ Rules:
     const groqData = await groqResponse.json()
     const text = groqData.choices[0].message.content
 
-    // Parse the AI response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      throw new Error("Failed to parse AI response as JSON")
-    }
+    console.log("[v0] Raw AI response:", text.substring(0, 500))
 
-    const quizData = JSON.parse(jsonMatch[0])
+    // Parse the AI response - try multiple approaches
+    let quizData
+    try {
+      // First try: direct JSON parse
+      quizData = JSON.parse(text)
+    } catch {
+      // Second try: extract JSON from markdown code blocks
+      const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+      if (codeBlockMatch) {
+        quizData = JSON.parse(codeBlockMatch[1].trim())
+      } else {
+        // Third try: find JSON object in text
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        if (!jsonMatch) {
+          console.error("[v0] Could not find JSON in response:", text)
+          throw new Error("Failed to parse AI response as JSON")
+        }
+        quizData = JSON.parse(jsonMatch[0])
+      }
+    }
 
     // Ensure fileName is set correctly
     quizData.fileName = fileName
+
+    // Save quiz to generatedQuizzes collection for evaluation
+    try {
+      await addDoc(collection(db, "generatedQuizzes"), {
+        fileId,
+        userId,
+        fileName,
+        difficulty,
+        questions: quizData.questions,
+        createdAt: Timestamp.now(),
+        evaluationStatus: "pending",
+      })
+    } catch (saveError) {
+      console.error("[v0] Error saving quiz for evaluation:", saveError)
+      // Don't fail the request if saving fails
+    }
 
     return NextResponse.json(quizData)
   } catch (error: any) {

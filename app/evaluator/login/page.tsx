@@ -34,11 +34,17 @@ export default function EvaluatorLoginPage() {
     setError("")
     setLoading(true)
 
+    console.log("[v0] Form submitted with:", formData.email)
+    console.log("[v0] Expected:", EVALUATOR_CREDENTIALS.email)
+    console.log("[v0] Email match:", formData.email === EVALUATOR_CREDENTIALS.email)
+    console.log("[v0] Password match:", formData.password === EVALUATOR_CREDENTIALS.password)
+
     // Check against hardcoded credentials
     if (
       formData.email === EVALUATOR_CREDENTIALS.email &&
       formData.password === EVALUATOR_CREDENTIALS.password
     ) {
+      console.log("[v0] Credentials matched! Redirecting...")
       // Store evaluator session in localStorage
       localStorage.setItem("evaluator_session", JSON.stringify({
         isEvaluator: true,
@@ -46,6 +52,7 @@ export default function EvaluatorLoginPage() {
       }))
       router.push("/evaluator/dashboard")
     } else {
+      console.log("[v0] Credentials did not match")
       setError("Invalid evaluator credentials")
     }
 

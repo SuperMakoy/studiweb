@@ -1,7 +1,7 @@
 // API route to generate quiz from uploaded file
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/firebase"
-import { doc, getDoc } from "firebase/firestore"
+import { doc, getDoc, collection, addDoc, Timestamp } from "firebase/firestore"
 import { extractFileContent } from "@/lib/file-extraction-service"
 
 // Anderson & Krathwohl Taxonomy distribution percentages
@@ -192,6 +192,22 @@ Rules:
 
     // Ensure fileName is set correctly
     quizData.fileName = fileName
+
+    // Save quiz to generatedQuizzes collection for evaluation
+    try {
+      await addDoc(collection(db, "generatedQuizzes"), {
+        fileId,
+        userId,
+        fileName,
+        difficulty,
+        questions: quizData.questions,
+        createdAt: Timestamp.now(),
+        evaluationStatus: "pending",
+      })
+    } catch (saveError) {
+      console.error("[v0] Error saving quiz for evaluation:", saveError)
+      // Don't fail the request if saving fails
+    }
 
     return NextResponse.json(quizData)
   } catch (error: any) {

@@ -4,7 +4,9 @@ import {
   addDoc,
   query,
   getDocs,
+  getDoc,
   doc,
+  setDoc,
   Timestamp,
   collectionGroup,
 } from "firebase/firestore"
@@ -27,14 +29,15 @@ export interface QuizForEvaluation {
   userId: string
   difficulty: "easy" | "moderate" | "hard"
   questions: QuizQuestion[]
-  generatedAt: Date
+  questionCount: number
+  createdAt: number
+  evaluationStatus: "pending" | "evaluated"
 }
 
 export interface QuestionEvaluation {
   questionId: number
-  question: string
-  statedCognitiveLevel: CognitiveLevel
-  alignmentRating: number // 1-5
+  alignmentScore: number // 1-5
+  suggestedLevel: CognitiveLevel
   notes: string
 }
 
@@ -75,23 +78,78 @@ export function logoutEvaluator(): void {
 // Get all generated quizzes from all users for evaluation
 export async function getQuizzesForEvaluation(): Promise<QuizForEvaluation[]> {
   try {
-    // Query quizzes from the generatedQuizzes collection
     const quizzesRef = collection(db, "generatedQuizzes")
     const querySnapshot = await getDocs(quizzesRef)
 
-    const quizzes: QuizForEvaluation[] = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      fileId: doc.data().fileId,
-      fileName: doc.data().fileName,
-      userId: doc.data().userId,
-      difficulty: doc.data().difficulty || "moderate",
-      questions: doc.data().questions || [],
-      generatedAt: doc.data().generatedAt?.toDate() || new Date(),
-    }))
+    const quizzes: QuizForEvaluation[] = querySnapshot.docs.map((docSnap) => {
+      const data = docSnap.data()
+      return {
+        id: docSnap.id,
+        fileId: data.fileId || "",
+        fileName: data.fileName || "Unknown",
+        userId: data.userId || "",
+        difficulty: data.difficulty || "moderate",
+        questions: data.questions || [],
+        questionCount: data.questions?.length || 0,
+        createdAt: data.createdAt?.toMillis?.() || data.createdAt || Date.now(),
+        evaluationStatus: data.evaluationStatus || "pending",
+      }
+    })
 
-    return quizzes.sort((a, b) => b.generatedAt.getTime() - a.generatedAt.getTime())
+    return quizzes.sort((a, b) => b.createdAt - a.createdAt)
   } catch (error) {
     console.error("Error fetching quizzes for evaluation:", error)
+    throw error
+  }
+}
+
+// Get a single quiz for evaluation
+export async function getQuizForEvaluation(quizId: string): Promise<QuizForEvaluation | null> {
+  try {
+    const quizDoc = await getDoc(doc(db, "generatedQuizzes", quizId))
+    if (!quizDoc.exists()) return null
+
+    const data = quizDoc.data()
+    return {
+      id: quizDoc.id,
+      fileId: data.fileId || "",
+      fileName: data.fileName || "Unknown",
+      userId: data.userId || "",
+      difficulty: data.difficulty || "moderate",
+      questions: data.questions || [],
+      questionCount: data.questions?.length || 0,
+      createdAt: data.createdAt?.toMillis?.() || data.createdAt || Date.now(),
+      evaluationStatus: data.evaluationStatus || "pending",
+    }
+  } catch (error) {
+    console.error("Error fetching quiz for evaluation:", error)
+    throw error
+  }
+}
+
+// Save evaluation for a quiz
+export async function saveEvaluation(
+  quizId: string,
+  questionEvaluations: QuestionEvaluation[],
+  evaluatorName: string
+): Promise<void> {
+  try {
+    // Save to evaluations collection
+    await setDoc(doc(db, "evaluations", quizId), {
+      quizId,
+      evaluatorName,
+      questionEvaluations,
+      evaluatedAt: Timestamp.now(),
+    })
+
+    // Update quiz status
+    await setDoc(
+      doc(db, "generatedQuizzes", quizId),
+      { evaluationStatus: "evaluated" },
+      { merge: true }
+    )
+  } catch (error) {
+    console.error("Error saving evaluation:", error)
     throw error
   }
 }

@@ -332,10 +332,17 @@ export default function EvaluatorDashboard() {
                     </div>
                   </div>
                   <Button
-                    onClick={() => router.push(`/evaluator/evaluate/${quiz.id}`)}
-                    className="bg-[#5B6EE8] hover:bg-[#4a5cd6] text-white"
+                    onClick={() => router.push(
+                      quiz.evaluationStatus === "evaluated" 
+                        ? `/evaluator/view/${quiz.id}` 
+                        : `/evaluator/evaluate/${quiz.id}`
+                    )}
+                    className={quiz.evaluationStatus === "evaluated" 
+                      ? "bg-green-600 hover:bg-green-700 text-white"
+                      : "bg-[#5B6EE8] hover:bg-[#4a5cd6] text-white"
+                    }
                   >
-                    {quiz.evaluationStatus === "evaluated" ? "View Evaluation" : "Evaluate"}
+                    {quiz.evaluationStatus === "evaluated" ? "View Results" : "Evaluate"}
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>

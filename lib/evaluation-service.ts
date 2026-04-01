@@ -154,6 +154,32 @@ export async function saveEvaluation(
   }
 }
 
+// Get evaluation for a quiz
+export interface SavedEvaluation {
+  quizId: string
+  evaluatorName: string
+  questionEvaluations: QuestionEvaluation[]
+  evaluatedAt: Date
+}
+
+export async function getEvaluation(quizId: string): Promise<SavedEvaluation | null> {
+  try {
+    const evalDoc = await getDoc(doc(db, "evaluations", quizId))
+    if (!evalDoc.exists()) return null
+
+    const data = evalDoc.data()
+    return {
+      quizId: data.quizId,
+      evaluatorName: data.evaluatorName || "Unknown",
+      questionEvaluations: data.questionEvaluations || [],
+      evaluatedAt: data.evaluatedAt?.toDate?.() || new Date(),
+    }
+  } catch (error) {
+    console.error("Error fetching evaluation:", error)
+    throw error
+  }
+}
+
 // Save quiz evaluation
 export async function saveQuizEvaluation(evaluation: Omit<QuizEvaluation, "id">): Promise<string> {
   try {

@@ -74,6 +74,7 @@ export async function uploadStudyFile(file: File): Promise<StudyFile> {
 
 export async function getUserFiles(): Promise<StudyFile[]> {
   const user = auth.currentUser
+  console.log("[v0] getUserFiles called, auth.currentUser:", user?.uid || "null")
   if (!user) throw new Error("User not authenticated")
 
   try {
@@ -246,6 +247,7 @@ export async function saveQuizResult(
 
 export async function getQuizHistory(): Promise<QuizHistory[]> {
   const user = auth.currentUser
+  console.log("[v0] getQuizHistory called, auth.currentUser:", user?.uid || "null")
   if (!user) throw new Error("User not authenticated")
 
   try {

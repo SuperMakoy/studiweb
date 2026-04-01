@@ -18,6 +18,7 @@ export default function RecentlyOpenedFiles() {
     }
 
     const loadFiles = async () => {
+      console.log("[v0] RecentlyOpenedFiles: loadFiles called, user.uid:", user?.uid)
       try {
         const userFiles = await getUserFiles()
         const sortedByModified = userFiles.sort((a, b) => {

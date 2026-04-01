@@ -81,6 +81,69 @@ function buildTaxonomyInstructions(distribution: Record<CognitiveLevel, number>)
   return lines.join("\n")
 }
 
+// Attempt to repair truncated JSON
+function repairJSON(text: string): string {
+  let json = text.trim()
+  
+  // Remove markdown code blocks if present
+  const codeBlockMatch = json.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (codeBlockMatch) {
+    json = codeBlockMatch[1].trim()
+  }
+  
+  // Find the start of JSON
+  const startIndex = json.indexOf('{')
+  if (startIndex === -1) return json
+  json = json.substring(startIndex)
+  
+  // Count brackets to check if JSON is complete
+  let braceCount = 0
+  let bracketCount = 0
+  let inString = false
+  let lastChar = ''
+  
+  for (const char of json) {
+    if (char === '"' && lastChar !== '\\') {
+      inString = !inString
+    }
+    if (!inString) {
+      if (char === '{') braceCount++
+      if (char === '}') braceCount--
+      if (char === '[') bracketCount++
+      if (char === ']') bracketCount--
+    }
+    lastChar = char
+  }
+  
+  // If truncated, try to close it properly
+  if (braceCount > 0 || bracketCount > 0) {
+    // Remove incomplete last question if present
+    const lastQuestionStart = json.lastIndexOf('{"id":')
+    if (lastQuestionStart > 0) {
+      const beforeLastQuestion = json.substring(0, lastQuestionStart)
+      // Check if the question before is complete
+      if (beforeLastQuestion.includes('"cognitiveLevel"')) {
+        json = beforeLastQuestion.trimEnd()
+        if (json.endsWith(',')) {
+          json = json.slice(0, -1)
+        }
+      }
+    }
+    
+    // Close any open brackets/braces
+    while (bracketCount > 0) {
+      json += ']'
+      bracketCount--
+    }
+    while (braceCount > 0) {
+      json += '}'
+      braceCount--
+    }
+  }
+  
+  return json
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { fileId, userId, length = 10, difficulty = "moderate", content, fileName: providedFileName } = await request.json()
@@ -181,7 +244,7 @@ Rules:
           },
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 4096,
       }),
     })
 

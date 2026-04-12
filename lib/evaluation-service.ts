@@ -34,9 +34,18 @@ export interface QuizForEvaluation {
   evaluationStatus: "pending" | "evaluated"
 }
 
+// 4-Criteria Rubric based on research-backed evaluation methodology
+export interface RubricCriteria {
+  verbAlignment: number      // 1-5: Does the action verb match the taxonomy level?
+  cognitiveComplexity: number // 1-5: Does the question require the expected thinking level?
+  questionClarity: number    // 1-5: Is the question understandable?
+  topicRelevance: number     // 1-5: Is the question relevant to the content?
+}
+
 export interface QuestionEvaluation {
   questionId: number
-  alignmentScore: number // 1-5
+  rubricScores: RubricCriteria  // New 4-criteria rubric
+  alignmentScore: number        // Overall alignment (computed average or manual)
   suggestedLevel: CognitiveLevel
   notes: string
 }

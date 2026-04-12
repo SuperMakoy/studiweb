@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { getQuizzesForEvaluation, type QuizForEvaluation } from "@/lib/evaluation-service"
-import { FileText, Clock, ChevronRight, LogOut, Upload, Loader2 } from "lucide-react"
+import EvaluatorSidebar from "@/components/evaluator/evaluator-sidebar"
+import { FileText, Clock, ChevronRight, Upload, Loader2, ClipboardCheck, AlertCircle, CheckCircle2 } from "lucide-react"
 
 type Difficulty = "easy" | "moderate" | "hard"
 
@@ -23,13 +24,11 @@ export default function EvaluatorDashboard() {
   const [generateError, setGenerateError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check if evaluator is logged in
     const isEvaluator = sessionStorage.getItem("isEvaluator")
     if (!isEvaluator) {
       router.push("/evaluator/login")
       return
     }
-
     loadQuizzes()
   }, [router])
 
@@ -77,10 +76,8 @@ export default function EvaluatorDashboard() {
     setGenerateError(null)
 
     try {
-      // Read file content
       const content = await uploadedFile.text()
 
-      // Call the API to generate quiz
       const response = await fetch("/api/generate-quiz-from-file", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,7 +87,7 @@ export default function EvaluatorDashboard() {
           fileName: uploadedFile.name,
           difficulty,
           length: questionCount,
-          content, // Pass content directly for evaluator
+          content,
         }),
       })
 
@@ -99,7 +96,6 @@ export default function EvaluatorDashboard() {
         throw new Error(errorData.error || "Failed to generate quiz")
       }
 
-      // Reload quizzes to show the new one
       await loadQuizzes()
       setUploadedFile(null)
       if (fileInputRef.current) {
@@ -111,12 +107,6 @@ export default function EvaluatorDashboard() {
     } finally {
       setGenerating(false)
     }
-  }
-
-  const handleLogout = () => {
-    sessionStorage.removeItem("isEvaluator")
-    sessionStorage.removeItem("evaluatorName")
-    router.push("/evaluator/login")
   }
 
   const formatDate = (timestamp: number) => {
@@ -132,225 +122,278 @@ export default function EvaluatorDashboard() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "easy":
-        return "bg-green-100 text-green-700"
+        return "bg-emerald-100 text-emerald-700"
       case "moderate":
-        return "bg-yellow-100 text-yellow-700"
+        return "bg-amber-100 text-amber-700"
       case "hard":
-        return "bg-red-100 text-red-700"
+        return "bg-rose-100 text-rose-700"
       default:
-        return "bg-gray-100 text-gray-700"
+        return "bg-slate-100 text-slate-700"
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "evaluated":
-        return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Evaluated</span>
-      case "pending":
-        return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">Pending</span>
-      default:
-        return null
-    }
-  }
+  // Stats
+  const pendingCount = quizzes.filter((q) => q.evaluationStatus === "pending").length
+  const evaluatedCount = quizzes.filter((q) => q.evaluationStatus === "evaluated").length
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#5B6EE8] flex items-center justify-center">
-        <div className="text-white text-xl">Loading quizzes...</div>
+      <div className="flex h-screen bg-slate-50">
+        <EvaluatorSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-[#5B6EE8] text-white py-6 px-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Evaluator Dashboard</h1>
-            <p className="text-white/80 mt-1">
-              Welcome, {sessionStorage.getItem("evaluatorName") || "Evaluator"}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            className="bg-transparent border-white text-white hover:bg-white hover:text-[#5B6EE8]"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto py-8 px-8">
-        {/* Generate Quiz Section */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Generate Quiz for Evaluation</h2>
-          <p className="text-gray-600 mb-6">
-            Upload a file to generate a quiz and evaluate its taxonomy alignment.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Left: File Upload */}
+    <div className="flex h-screen bg-slate-50">
+      <EvaluatorSidebar />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-white border-b border-slate-200 px-8 py-4">
+          <div className="flex items-center justify-between">
             <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.doc,.docx"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-[#5B6EE8] hover:bg-gray-50 transition"
-              >
-                <Upload className="w-10 h-10 mx-auto text-gray-400 mb-3" />
-                {uploadedFile ? (
-                  <div>
-                    <p className="font-medium text-gray-900">{uploadedFile.name}</p>
-                    <p className="text-sm text-gray-500 mt-1">Click to change file</p>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="font-medium text-gray-700">Click to upload a file</p>
-                    <p className="text-sm text-gray-500 mt-1">TXT, DOC, DOCX (max 1MB)</p>
-                  </div>
-                )}
-              </div>
+              <h1 className="text-2xl font-semibold text-slate-800">Evaluator Dashboard</h1>
+              <p className="text-slate-500 text-sm mt-0.5">
+                Anderson & Krathwohl Taxonomy Evaluation
+              </p>
             </div>
+          </div>
+        </header>
 
-            {/* Right: Settings */}
-            <div className="space-y-4">
-              {/* Difficulty */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
-                <div className="flex gap-2">
-                  {(["easy", "moderate", "hard"] as Difficulty[]).map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDifficulty(d)}
-                      className={`flex-1 py-2 px-4 rounded-lg font-medium capitalize transition ${
-                        difficulty === d
-                          ? "bg-[#5B6EE8] text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto p-8">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">{quizzes.length}</p>
+                  <p className="text-slate-500 text-sm">Total Quizzes</p>
                 </div>
               </div>
-
-              {/* Question Count */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Questions: {questionCount}
-                </label>
-                <input
-                  type="range"
-                  min="10"
-                  max="50"
-                  step="5"
-                  value={questionCount}
-                  onChange={(e) => setQuestionCount(Number(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5B6EE8]"
-                />
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">{pendingCount}</p>
+                  <p className="text-slate-500 text-sm">Pending Review</p>
+                </div>
               </div>
-
-              {/* Generate Button */}
-              <Button
-                onClick={handleGenerateQuiz}
-                disabled={!uploadedFile || generating}
-                className="w-full bg-[#5B6EE8] hover:bg-[#4a5cd6] text-white py-3"
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating Quiz...
-                  </>
-                ) : (
-                  "Generate Quiz"
-                )}
-              </Button>
-
-              {generateError && (
-                <p className="text-red-600 text-sm">{generateError}</p>
-              )}
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">{evaluatedCount}</p>
+                  <p className="text-slate-500 text-sm">Evaluated</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Quizzes List Section */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Quizzes for Evaluation</h2>
-          <p className="text-gray-600 mt-1">
-            Evaluate each quiz to check if questions align with Anderson & Krathwohl taxonomy
-          </p>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-
-        {quizzes.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-            <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">No quizzes to evaluate</h3>
-            <p className="text-gray-500 mt-2">
-              Quizzes will appear here once students generate them.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {quizzes.map((quiz) => (
-              <div
-                key={quiz.id}
-                className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{quiz.fileName}</h3>
-                      {getStatusBadge(quiz.evaluationStatus)}
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <span className="flex items-center gap-1">
-                        <FileText className="w-4 h-4" />
-                        {quiz.questionCount} questions
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getDifficultyColor(quiz.difficulty)}`}>
-                        {quiz.difficulty}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {formatDate(quiz.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => router.push(
-                      quiz.evaluationStatus === "evaluated" 
-                        ? `/evaluator/view/${quiz.id}` 
-                        : `/evaluator/evaluate/${quiz.id}`
-                    )}
-                    className={quiz.evaluationStatus === "evaluated" 
-                      ? "bg-green-600 hover:bg-green-700 text-white"
-                      : "bg-[#5B6EE8] hover:bg-[#4a5cd6] text-white"
-                    }
+          {/* Generate Quiz Section */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-8">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h2 className="text-lg font-semibold text-slate-800">Generate Quiz for Evaluation</h2>
+              <p className="text-slate-500 text-sm">
+                Upload a document to generate a quiz and evaluate its taxonomy alignment
+              </p>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* File Upload */}
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".txt,.doc,.docx"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 transition-all"
                   >
-                    {quiz.evaluationStatus === "evaluated" ? "View Results" : "Evaluate"}
-                    <ChevronRight className="w-4 h-4 ml-1" />
+                    <Upload className="w-10 h-10 mx-auto text-slate-400 mb-3" />
+                    {uploadedFile ? (
+                      <div>
+                        <p className="font-medium text-slate-800">{uploadedFile.name}</p>
+                        <p className="text-sm text-slate-500 mt-1">Click to change file</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-medium text-slate-700">Click to upload a file</p>
+                        <p className="text-sm text-slate-500 mt-1">TXT, DOC, DOCX (max 1MB)</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Settings */}
+                <div className="space-y-5">
+                  {/* Difficulty */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Difficulty Level</label>
+                    <div className="flex gap-2">
+                      {(["easy", "moderate", "hard"] as Difficulty[]).map((d) => (
+                        <button
+                          key={d}
+                          onClick={() => setDifficulty(d)}
+                          className={`flex-1 py-2.5 px-4 rounded-lg font-medium capitalize text-sm transition ${
+                            difficulty === d
+                              ? "bg-blue-600 text-white"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          }`}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Question Count */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Number of Questions: <span className="text-blue-600 font-semibold">{questionCount}</span>
+                    </label>
+                    <input
+                      type="range"
+                      min="10"
+                      max="50"
+                      step="5"
+                      value={questionCount}
+                      onChange={(e) => setQuestionCount(Number(e.target.value))}
+                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                    <div className="flex justify-between text-xs text-slate-500 mt-1">
+                      <span>10</span>
+                      <span>50</span>
+                    </div>
+                  </div>
+
+                  {/* Generate Button */}
+                  <Button
+                    onClick={handleGenerateQuiz}
+                    disabled={!uploadedFile || generating}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                  >
+                    {generating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating Quiz...
+                      </>
+                    ) : (
+                      <>
+                        <ClipboardCheck className="w-4 h-4 mr-2" />
+                        Generate Quiz
+                      </>
+                    )}
                   </Button>
+
+                  {generateError && (
+                    <p className="text-rose-600 text-sm">{generateError}</p>
+                  )}
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        )}
-      </main>
+
+          {/* Quizzes List */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h2 className="text-lg font-semibold text-slate-800">Quizzes for Evaluation</h2>
+              <p className="text-slate-500 text-sm">
+                Review and evaluate quizzes for taxonomy alignment
+              </p>
+            </div>
+
+            {error && (
+              <div className="mx-6 mt-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            {quizzes.length === 0 ? (
+              <div className="p-12 text-center">
+                <FileText className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                <h3 className="text-lg font-medium text-slate-800">No quizzes to evaluate</h3>
+                <p className="text-slate-500 mt-2">
+                  Generate a quiz above to start evaluating
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {quizzes.map((quiz) => (
+                  <div
+                    key={quiz.id}
+                    className="px-6 py-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-1.5">
+                          <h3 className="font-semibold text-slate-800 truncate">{quiz.fileName}</h3>
+                          {quiz.evaluationStatus === "evaluated" ? (
+                            <span className="px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                              Evaluated
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 text-xs rounded-full bg-amber-100 text-amber-700 font-medium">
+                              Pending
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                          <span className="flex items-center gap-1.5">
+                            <FileText className="w-4 h-4" />
+                            {quiz.questionCount} questions
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getDifficultyColor(quiz.difficulty)}`}>
+                            {quiz.difficulty}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="w-4 h-4" />
+                            {formatDate(quiz.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => router.push(
+                          quiz.evaluationStatus === "evaluated" 
+                            ? `/evaluator/view/${quiz.id}` 
+                            : `/evaluator/evaluate/${quiz.id}`
+                        )}
+                        className={
+                          quiz.evaluationStatus === "evaluated" 
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }
+                      >
+                        {quiz.evaluationStatus === "evaluated" ? "View Results" : "Evaluate"}
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

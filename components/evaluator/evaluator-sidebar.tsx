@@ -61,14 +61,18 @@ export default function EvaluatorSidebar() {
       <div className="px-3 mt-6">
         <p className="text-white/60 text-xs font-medium px-3 mb-3 tracking-wide">STATISTICS</p>
         
-        <button
-          type="button"
-          onClick={() => router.push("/evaluator/quizzes")}
-          className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer relative z-10 ${
+        <div
+          onClick={() => {
+            console.log("[v0] Quizzes clicked")
+            router.push("/evaluator/quizzes")
+          }}
+          role="button"
+          tabIndex={0}
+          className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer ${
             isQuizzesActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
           }`}
         >
-          <div className="flex items-center gap-3 pointer-events-none">
+          <div className="flex items-center gap-3">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
               isQuizzesActive ? "bg-[#5B6EE8]/10" : "bg-white/20"
             }`}>
@@ -79,16 +83,20 @@ export default function EvaluatorSidebar() {
               <p className={`text-xs ${isQuizzesActive ? "text-gray-500" : "text-white/70"}`}>Total Quizzes</p>
             </div>
           </div>
-        </button>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => router.push("/evaluator/pending")}
-          className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer relative z-10 ${
+        <div
+          onClick={() => {
+            console.log("[v0] Pending clicked")
+            router.push("/evaluator/pending")
+          }}
+          role="button"
+          tabIndex={0}
+          className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer ${
             isPendingActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
           }`}
         >
-          <div className="flex items-center gap-3 pointer-events-none">
+          <div className="flex items-center gap-3">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
               isPendingActive ? "bg-amber-100" : "bg-amber-500/30"
             }`}>
@@ -99,16 +107,20 @@ export default function EvaluatorSidebar() {
               <p className={`text-xs ${isPendingActive ? "text-gray-500" : "text-white/70"}`}>Pending</p>
             </div>
           </div>
-        </button>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => router.push("/evaluator/evaluated")}
-          className={`w-full rounded-lg p-3 transition cursor-pointer relative z-10 ${
+        <div
+          onClick={() => {
+            console.log("[v0] Evaluated clicked")
+            router.push("/evaluator/evaluated")
+          }}
+          role="button"
+          tabIndex={0}
+          className={`w-full rounded-lg p-3 transition cursor-pointer ${
             isEvaluatedActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
           }`}
         >
-          <div className="flex items-center gap-3 pointer-events-none">
+          <div className="flex items-center gap-3">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
               isEvaluatedActive ? "bg-emerald-100" : "bg-emerald-500/30"
             }`}>
@@ -119,7 +131,7 @@ export default function EvaluatorSidebar() {
               <p className={`text-xs ${isEvaluatedActive ? "text-gray-500" : "text-white/70"}`}>Evaluated</p>
             </div>
           </div>
-        </button>
+        </div>
       </div>
 
       {/* Evaluator Profile & Logout */}

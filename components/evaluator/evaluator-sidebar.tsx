@@ -1,21 +1,28 @@
 "use client"
 
 import { useRouter, usePathname } from "next/navigation"
-import { LayoutDashboard, FileText, LogOut, ClipboardCheck } from "lucide-react"
-
-interface NavItem {
-  icon: React.ElementType
-  label: string
-  href: string
-}
-
-const navItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/evaluator/dashboard" },
-]
+import { useEffect, useState } from "react"
+import { LayoutDashboard, LogOut, User, FileText, Clock, CheckCircle2 } from "lucide-react"
+import { getQuizzesForEvaluation } from "@/lib/evaluation-service"
 
 export default function EvaluatorSidebar() {
   const router = useRouter()
   const pathname = usePathname()
+  const [stats, setStats] = useState({ total: 0, pending: 0, evaluated: 0 })
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const quizzes = await getQuizzesForEvaluation()
+        const pending = quizzes.filter(q => q.evaluationStatus === "pending").length
+        const evaluated = quizzes.filter(q => q.evaluationStatus === "evaluated").length
+        setStats({ total: quizzes.length, pending, evaluated })
+      } catch (error) {
+        console.error("Error fetching stats:", error)
+      }
+    }
+    fetchStats()
+  }, [pathname])
 
   const handleLogout = () => {
     sessionStorage.removeItem("isEvaluator")
@@ -23,64 +30,120 @@ export default function EvaluatorSidebar() {
     router.push("/evaluator/login")
   }
 
+  const isDashboardActive = pathname === "/evaluator/dashboard"
+  const isQuizzesActive = pathname === "/evaluator/quizzes"
+  const isPendingActive = pathname === "/evaluator/pending"
+  const isEvaluatedActive = pathname === "/evaluator/evaluated"
+
   return (
-    <aside className="hidden md:flex w-56 bg-slate-800 flex-col h-screen sticky top-0">
+    <aside className="hidden md:flex w-52 bg-[#5B6EE8] flex-col h-screen sticky top-0">
       {/* Logo */}
-      <div className="p-6 border-b border-slate-700">
-        <div className="flex items-center gap-2">
-          <div className="grid grid-cols-2 gap-0.5">
-            <div className="w-2.5 h-2.5 bg-amber-500 rounded-sm" />
-            <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm" />
-            <div className="w-2.5 h-2.5 bg-green-500 rounded-sm" />
-            <div className="w-2.5 h-2.5 bg-red-500 rounded-sm" />
-          </div>
-          <span className="text-xl font-bold text-white">STUDI</span>
-        </div>
-        <p className="text-slate-400 text-xs mt-1">Evaluator Panel</p>
+      <div className="p-6">
+        <h1 className="text-3xl font-bold text-white">STUDI</h1>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4">
-        <ul className="space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
-            
-            return (
-              <li key={item.href}>
-                <button
-                  onClick={() => router.push(item.href)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-300 hover:bg-slate-700 hover:text-white"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {item.label}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+      {/* Dashboard Nav */}
+      <nav className="px-3">
+        <button
+          onClick={() => router.push("/evaluator/dashboard")}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition ${
+            isDashboardActive
+              ? "bg-white text-[#5B6EE8]"
+              : "text-white hover:bg-[#4A5AC9]"
+          }`}
+        >
+          <LayoutDashboard className="w-5 h-5" />
+          Dashboard
+        </button>
       </nav>
 
-      {/* Evaluator Info & Logout */}
-      <div className="p-4 border-t border-slate-700">
-        <div className="flex items-center gap-3 mb-4 px-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-            <ClipboardCheck className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <p className="text-white text-sm font-medium">Evaluator</p>
-            <p className="text-slate-400 text-xs">Taxonomy Expert</p>
+      {/* Stats Section */}
+      <div className="px-3 mt-6">
+        <p className="text-white/60 text-xs font-medium px-3 mb-3 tracking-wide">STATISTICS</p>
+        
+        <div
+          onClick={() => router.push("/evaluator/quizzes")}
+          role="button"
+          tabIndex={0}
+          className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer ${
+            isQuizzesActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isQuizzesActive ? "bg-[#5B6EE8]/10" : "bg-white/20"
+            }`}>
+              <FileText className={`w-4 h-4 ${isQuizzesActive ? "text-[#5B6EE8]" : "text-white"}`} />
+            </div>
+            <div className="text-left">
+              <p className={`text-lg font-bold ${isQuizzesActive ? "text-[#5B6EE8]" : "text-white"}`}>{stats.total}</p>
+              <p className={`text-xs ${isQuizzesActive ? "text-gray-500" : "text-white/70"}`}>Total Quizzes</p>
+            </div>
           </div>
         </div>
+
+        <div
+          onClick={() => router.push("/evaluator/pending")}
+          role="button"
+          tabIndex={0}
+          className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer ${
+            isPendingActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isPendingActive ? "bg-amber-100" : "bg-amber-500/30"
+            }`}>
+              <Clock className={`w-4 h-4 ${isPendingActive ? "text-amber-600" : "text-amber-300"}`} />
+            </div>
+            <div className="text-left">
+              <p className={`text-lg font-bold ${isPendingActive ? "text-gray-900" : "text-white"}`}>{stats.pending}</p>
+              <p className={`text-xs ${isPendingActive ? "text-gray-500" : "text-white/70"}`}>Pending</p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          onClick={() => router.push("/evaluator/evaluated")}
+          role="button"
+          tabIndex={0}
+          className={`w-full rounded-lg p-3 transition cursor-pointer ${
+            isEvaluatedActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isEvaluatedActive ? "bg-emerald-100" : "bg-emerald-500/30"
+            }`}>
+              <CheckCircle2 className={`w-4 h-4 ${isEvaluatedActive ? "text-emerald-600" : "text-emerald-300"}`} />
+            </div>
+            <div className="text-left">
+              <p className={`text-lg font-bold ${isEvaluatedActive ? "text-gray-900" : "text-white"}`}>{stats.evaluated}</p>
+              <p className={`text-xs ${isEvaluatedActive ? "text-gray-500" : "text-white/70"}`}>Evaluated</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Evaluator Profile & Logout */}
+      <div className="mt-auto p-4 border-t border-[#4A5AC9]">
+        <button
+          onClick={() => router.push("/evaluator/profile")}
+          className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-[#4A5AC9] transition mb-3"
+        >
+          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <User className="w-5 h-5 text-white" />
+          </div>
+          <div className="text-left">
+            <p className="text-white text-sm font-medium">Evaluator</p>
+            <p className="text-white/70 text-xs">View Profile</p>
+          </div>
+        </button>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-300 hover:bg-red-500/20 hover:text-red-400 transition-all"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white text-[#5B6EE8] font-bold rounded-lg hover:bg-gray-100 transition"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-4 h-4" />
           Logout
         </button>
       </div>

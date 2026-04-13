@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, usePathname } from "next/navigation"
-import { LayoutDashboard, LogOut, User } from "lucide-react"
+import { LayoutDashboard, LogOut, User, FileText, Clock, CheckCircle2 } from "lucide-react"
 
 export default function EvaluatorMobileHeader() {
   const router = useRouter()
@@ -13,7 +13,10 @@ export default function EvaluatorMobileHeader() {
     router.push("/evaluator/login")
   }
 
-  const isDashboardActive = pathname === "/evaluator/dashboard" || pathname?.startsWith("/evaluator/dashboard/")
+  const isDashboardActive = pathname === "/evaluator/dashboard"
+  const isQuizzesActive = pathname === "/evaluator/quizzes"
+  const isPendingActive = pathname === "/evaluator/pending"
+  const isEvaluatedActive = pathname === "/evaluator/evaluated"
   const isProfileActive = pathname === "/evaluator/profile"
 
   return (
@@ -32,6 +35,33 @@ export default function EvaluatorMobileHeader() {
             title="Dashboard"
           >
             <LayoutDashboard className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => router.push("/evaluator/quizzes")}
+            className={`p-2 rounded-lg transition ${
+              isQuizzesActive ? "bg-[#5B6EE8] text-white" : "text-gray-600 hover:bg-gray-100"
+            }`}
+            title="All Quizzes"
+          >
+            <FileText className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => router.push("/evaluator/pending")}
+            className={`p-2 rounded-lg transition ${
+              isPendingActive ? "bg-amber-500 text-white" : "text-gray-600 hover:bg-gray-100"
+            }`}
+            title="Pending"
+          >
+            <Clock className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => router.push("/evaluator/evaluated")}
+            className={`p-2 rounded-lg transition ${
+              isEvaluatedActive ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-100"
+            }`}
+            title="Evaluated"
+          >
+            <CheckCircle2 className="w-5 h-5" />
           </button>
           <button
             onClick={() => router.push("/evaluator/profile")}

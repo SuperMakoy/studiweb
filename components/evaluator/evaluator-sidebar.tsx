@@ -3,17 +3,7 @@
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { LayoutDashboard, LogOut, User, FileText, Clock, CheckCircle2 } from "lucide-react"
-import { getQuizzesForEvaluation, type QuizForEvaluation } from "@/lib/evaluation-service"
-
-interface NavItem {
-  icon: React.ElementType
-  label: string
-  href: string
-}
-
-const navItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/evaluator/dashboard" },
-]
+import { getQuizzesForEvaluation } from "@/lib/evaluation-service"
 
 export default function EvaluatorSidebar() {
   const router = useRouter()
@@ -40,6 +30,11 @@ export default function EvaluatorSidebar() {
     router.push("/evaluator/login")
   }
 
+  const isDashboardActive = pathname === "/evaluator/dashboard"
+  const isQuizzesActive = pathname === "/evaluator/quizzes"
+  const isPendingActive = pathname === "/evaluator/pending"
+  const isEvaluatedActive = pathname === "/evaluator/evaluated"
+
   return (
     <aside className="hidden md:flex w-52 bg-[#5B6EE8] flex-col h-screen sticky top-0">
       {/* Logo */}
@@ -47,68 +42,81 @@ export default function EvaluatorSidebar() {
         <h1 className="text-3xl font-bold text-white">STUDI</h1>
       </div>
 
-      {/* Navigation */}
-      <nav className="px-4 space-y-2">
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
-          
-          return (
-            <button
-              key={item.href}
-              onClick={() => router.push(item.href)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition ${
-                isActive
-                  ? "bg-white text-[#5B6EE8]"
-                  : "text-white hover:bg-[#4A5AC9]"
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              {item.label}
-            </button>
-          )
-        })}
+      {/* Dashboard Nav */}
+      <nav className="px-3">
+        <button
+          onClick={() => router.push("/evaluator/dashboard")}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition ${
+            isDashboardActive
+              ? "bg-white text-[#5B6EE8]"
+              : "text-white hover:bg-[#4A5AC9]"
+          }`}
+        >
+          <LayoutDashboard className="w-5 h-5" />
+          Dashboard
+        </button>
       </nav>
 
       {/* Stats Section */}
-      <div className="px-4 mt-6 space-y-2">
-        <p className="text-white/60 text-xs font-medium px-2 mb-2">STATISTICS</p>
+      <div className="px-3 mt-6">
+        <p className="text-white/60 text-xs font-medium px-3 mb-3 tracking-wide">STATISTICS</p>
         
-        <div className="bg-white/10 rounded-lg p-3">
+        <button
+          onClick={() => router.push("/evaluator/quizzes")}
+          className={`w-full rounded-lg p-3 mb-2 transition ${
+            isQuizzesActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-              <FileText className="w-4 h-4 text-white" />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isQuizzesActive ? "bg-[#5B6EE8]/10" : "bg-white/20"
+            }`}>
+              <FileText className={`w-4 h-4 ${isQuizzesActive ? "text-[#5B6EE8]" : "text-white"}`} />
             </div>
-            <div>
-              <p className="text-white text-lg font-bold">{stats.total}</p>
-              <p className="text-white/70 text-xs">Total Quizzes</p>
+            <div className="text-left">
+              <p className={`text-lg font-bold ${isQuizzesActive ? "text-[#5B6EE8]" : "text-white"}`}>{stats.total}</p>
+              <p className={`text-xs ${isQuizzesActive ? "text-gray-500" : "text-white/70"}`}>Total Quizzes</p>
             </div>
           </div>
-        </div>
+        </button>
 
-        <div className="bg-white/10 rounded-lg p-3">
+        <button
+          onClick={() => router.push("/evaluator/pending")}
+          className={`w-full rounded-lg p-3 mb-2 transition ${
+            isPendingActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-amber-500/30 rounded-lg flex items-center justify-center">
-              <Clock className="w-4 h-4 text-amber-300" />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isPendingActive ? "bg-amber-100" : "bg-amber-500/30"
+            }`}>
+              <Clock className={`w-4 h-4 ${isPendingActive ? "text-amber-600" : "text-amber-300"}`} />
             </div>
-            <div>
-              <p className="text-white text-lg font-bold">{stats.pending}</p>
-              <p className="text-white/70 text-xs">Pending</p>
+            <div className="text-left">
+              <p className={`text-lg font-bold ${isPendingActive ? "text-gray-900" : "text-white"}`}>{stats.pending}</p>
+              <p className={`text-xs ${isPendingActive ? "text-gray-500" : "text-white/70"}`}>Pending</p>
             </div>
           </div>
-        </div>
+        </button>
 
-        <div className="bg-white/10 rounded-lg p-3">
+        <button
+          onClick={() => router.push("/evaluator/evaluated")}
+          className={`w-full rounded-lg p-3 transition ${
+            isEvaluatedActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-emerald-500/30 rounded-lg flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isEvaluatedActive ? "bg-emerald-100" : "bg-emerald-500/30"
+            }`}>
+              <CheckCircle2 className={`w-4 h-4 ${isEvaluatedActive ? "text-emerald-600" : "text-emerald-300"}`} />
             </div>
-            <div>
-              <p className="text-white text-lg font-bold">{stats.evaluated}</p>
-              <p className="text-white/70 text-xs">Evaluated</p>
+            <div className="text-left">
+              <p className={`text-lg font-bold ${isEvaluatedActive ? "text-gray-900" : "text-white"}`}>{stats.evaluated}</p>
+              <p className={`text-xs ${isEvaluatedActive ? "text-gray-500" : "text-white/70"}`}>Evaluated</p>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Evaluator Profile & Logout */}

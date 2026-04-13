@@ -62,12 +62,13 @@ export default function EvaluatorSidebar() {
         <p className="text-white/60 text-xs font-medium px-3 mb-3 tracking-wide">STATISTICS</p>
         
         <button
+          type="button"
           onClick={() => router.push("/evaluator/quizzes")}
-          className={`w-full rounded-lg p-3 mb-2 transition ${
+          className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer relative z-10 ${
             isQuizzesActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
           }`}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pointer-events-none">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
               isQuizzesActive ? "bg-[#5B6EE8]/10" : "bg-white/20"
             }`}>
@@ -81,12 +82,13 @@ export default function EvaluatorSidebar() {
         </button>
 
         <button
+          type="button"
           onClick={() => router.push("/evaluator/pending")}
-          className={`w-full rounded-lg p-3 mb-2 transition ${
+          className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer relative z-10 ${
             isPendingActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
           }`}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pointer-events-none">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
               isPendingActive ? "bg-amber-100" : "bg-amber-500/30"
             }`}>
@@ -100,12 +102,13 @@ export default function EvaluatorSidebar() {
         </button>
 
         <button
+          type="button"
           onClick={() => router.push("/evaluator/evaluated")}
-          className={`w-full rounded-lg p-3 transition ${
+          className={`w-full rounded-lg p-3 transition cursor-pointer relative z-10 ${
             isEvaluatedActive ? "bg-white" : "bg-white/10 hover:bg-white/20"
           }`}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pointer-events-none">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
               isEvaluatedActive ? "bg-emerald-100" : "bg-emerald-500/30"
             }`}>

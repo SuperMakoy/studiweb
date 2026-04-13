@@ -62,10 +62,7 @@ export default function EvaluatorSidebar() {
         <p className="text-white/60 text-xs font-medium px-3 mb-3 tracking-wide">STATISTICS</p>
         
         <div
-          onClick={() => {
-            console.log("[v0] Quizzes clicked")
-            router.push("/evaluator/quizzes")
-          }}
+          onClick={() => router.push("/evaluator/quizzes")}
           role="button"
           tabIndex={0}
           className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer ${
@@ -86,10 +83,7 @@ export default function EvaluatorSidebar() {
         </div>
 
         <div
-          onClick={() => {
-            console.log("[v0] Pending clicked")
-            router.push("/evaluator/pending")
-          }}
+          onClick={() => router.push("/evaluator/pending")}
           role="button"
           tabIndex={0}
           className={`w-full rounded-lg p-3 mb-2 transition cursor-pointer ${
@@ -110,10 +104,7 @@ export default function EvaluatorSidebar() {
         </div>
 
         <div
-          onClick={() => {
-            console.log("[v0] Evaluated clicked")
-            router.push("/evaluator/evaluated")
-          }}
+          onClick={() => router.push("/evaluator/evaluated")}
           role="button"
           tabIndex={0}
           className={`w-full rounded-lg p-3 transition cursor-pointer ${

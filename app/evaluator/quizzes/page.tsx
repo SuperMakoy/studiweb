@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { getQuizzesForEvaluation, type QuizForEvaluation } from "@/lib/evaluation-service"
 import EvaluatorSidebar from "@/components/evaluator/evaluator-sidebar"
 import EvaluatorMobileHeader from "@/components/evaluator/evaluator-mobile-header"
-import { FileText, Clock, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
+import { FileText, Clock, Loader2, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react"
 
 export default function AllQuizzesPage() {
   const router = useRouter()
@@ -119,7 +119,7 @@ export default function AllQuizzesPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
               {quizzes.map((quiz) => (
                 <div
                   key={quiz.id}
@@ -130,8 +130,8 @@ export default function AllQuizzesPage() {
                   )}
                   className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:border-[#5B6EE8]/30 transition-all cursor-pointer group"
                 >
-                  {/* Status Badge */}
-                  <div className="flex items-center justify-between mb-4">
+                  {/* Top Row - Status & Difficulty */}
+                  <div className="flex items-center justify-between mb-3">
                     {quiz.evaluationStatus === "evaluated" ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">
                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -143,36 +143,35 @@ export default function AllQuizzesPage() {
                         Pending
                       </span>
                     )}
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize border ${getDifficultyStyles(quiz.difficulty)}`}>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize border ${getDifficultyStyles(quiz.difficulty)}`}>
                       {quiz.difficulty}
                     </span>
                   </div>
 
-                  {/* Quiz Info */}
-                  <h3 className="font-semibold text-gray-900 text-base mb-2 truncate group-hover:text-[#5B6EE8] transition-colors">
+                  {/* Quiz Name */}
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#5B6EE8] transition-colors">
                     {quiz.fileName}
                   </h3>
 
-                  {/* Stats Row */}
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                    <span className="flex items-center gap-1.5">
-                      <FileText className="w-4 h-4" />
-                      {quiz.questionCount} questions
-                    </span>
+                  {/* Question Count */}
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-4">
+                    <FileText className="w-4 h-4" />
+                    <span>{quiz.questionCount} questions</span>
                   </div>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                     <span className="flex items-center gap-1.5 text-xs text-gray-400">
                       <Clock className="w-3.5 h-3.5" />
                       {formatDate(quiz.createdAt)}
                     </span>
-                    <span className={`text-xs font-medium ${
+                    <span className={`inline-flex items-center gap-1 text-xs font-medium ${
                       quiz.evaluationStatus === "evaluated" 
-                        ? "text-emerald-600 group-hover:text-emerald-700" 
-                        : "text-[#5B6EE8] group-hover:text-[#4A5AC9]"
+                        ? "text-emerald-600" 
+                        : "text-[#5B6EE8]"
                     }`}>
-                      {quiz.evaluationStatus === "evaluated" ? "View Results" : "Start Evaluation"} →
+                      {quiz.evaluationStatus === "evaluated" ? "View Results" : "Evaluate"}
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </span>
                   </div>
                 </div>

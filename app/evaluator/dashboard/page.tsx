@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { getQuizzesForEvaluation, type QuizForEvaluation } from "@/lib/evaluation-service"
 import EvaluatorSidebar from "@/components/evaluator/evaluator-sidebar"
+import EvaluatorMobileHeader from "@/components/evaluator/evaluator-mobile-header"
 import { FileText, Clock, ChevronRight, Upload, Loader2, ClipboardCheck, AlertCircle, CheckCircle2 } from "lucide-react"
 
 type Difficulty = "easy" | "moderate" | "hard"
@@ -138,26 +139,28 @@ export default function EvaluatorDashboard() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-slate-50">
+      <div className="md:flex h-screen bg-gray-50">
+        <EvaluatorMobileHeader />
         <EvaluatorSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <div className="flex-1 flex items-center justify-center pt-14 md:pt-0">
+          <Loader2 className="w-8 h-8 animate-spin text-[#5B6EE8]" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="md:flex h-screen bg-gray-50">
+      <EvaluatorMobileHeader />
       <EvaluatorSidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden pt-14 md:pt-0">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 px-8 py-4">
+        <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-800">Evaluator Dashboard</h1>
-              <p className="text-slate-500 text-sm mt-0.5">
+              <h1 className="text-lg md:text-2xl font-semibold text-gray-900">Evaluator Dashboard</h1>
+              <p className="text-gray-500 text-xs md:text-sm mt-0.5">
                 Anderson & Krathwohl Taxonomy Evaluation
               </p>
             </div>
@@ -165,57 +168,57 @@ export default function EvaluatorDashboard() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto p-8">
+        <main className="flex-1 overflow-auto p-4 md:p-8">
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-blue-600" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-[#5B6EE8]/10 rounded-xl flex items-center justify-center">
+                  <FileText className="w-5 h-5 md:w-6 md:h-6 text-[#5B6EE8]" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-800">{quizzes.length}</p>
-                  <p className="text-slate-500 text-sm">Total Quizzes</p>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{quizzes.length}</p>
+                  <p className="text-gray-500 text-xs md:text-sm">Total Quizzes</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-amber-600" />
+            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-800">{pendingCount}</p>
-                  <p className="text-slate-500 text-sm">Pending Review</p>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{pendingCount}</p>
+                  <p className="text-gray-500 text-xs md:text-sm">Pending Review</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-800">{evaluatedCount}</p>
-                  <p className="text-slate-500 text-sm">Evaluated</p>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900">{evaluatedCount}</p>
+                  <p className="text-gray-500 text-xs md:text-sm">Evaluated</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Generate Quiz Section */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-8">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h2 className="text-lg font-semibold text-slate-800">Generate Quiz for Evaluation</h2>
-              <p className="text-slate-500 text-sm">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6 md:mb-8">
+            <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-100">
+              <h2 className="text-base md:text-lg font-semibold text-gray-900">Generate Quiz for Evaluation</h2>
+              <p className="text-gray-500 text-xs md:text-sm">
                 Upload a document to generate a quiz and evaluate its taxonomy alignment
               </p>
             </div>
             
-            <div className="p-6">
-              <div className="grid md:grid-cols-2 gap-6">
+            <div className="p-4 md:p-6">
+              <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                 {/* File Upload */}
                 <div>
                   <input
@@ -227,37 +230,37 @@ export default function EvaluatorDashboard() {
                   />
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 transition-all"
+                    className="border-2 border-dashed border-gray-300 rounded-xl p-6 md:p-8 text-center cursor-pointer hover:border-[#5B6EE8] hover:bg-[#5B6EE8]/5 transition-all"
                   >
-                    <Upload className="w-10 h-10 mx-auto text-slate-400 mb-3" />
+                    <Upload className="w-8 h-8 md:w-10 md:h-10 mx-auto text-gray-400 mb-3" />
                     {uploadedFile ? (
                       <div>
-                        <p className="font-medium text-slate-800">{uploadedFile.name}</p>
-                        <p className="text-sm text-slate-500 mt-1">Click to change file</p>
+                        <p className="font-medium text-gray-900 text-sm md:text-base">{uploadedFile.name}</p>
+                        <p className="text-xs md:text-sm text-gray-500 mt-1">Click to change file</p>
                       </div>
                     ) : (
                       <div>
-                        <p className="font-medium text-slate-700">Click to upload a file</p>
-                        <p className="text-sm text-slate-500 mt-1">TXT, DOC, DOCX (max 1MB)</p>
+                        <p className="font-medium text-gray-700 text-sm md:text-base">Click to upload a file</p>
+                        <p className="text-xs md:text-sm text-gray-500 mt-1">TXT, DOC, DOCX (max 1MB)</p>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Settings */}
-                <div className="space-y-5">
+                <div className="space-y-4 md:space-y-5">
                   {/* Difficulty */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Difficulty Level</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
                     <div className="flex gap-2">
                       {(["easy", "moderate", "hard"] as Difficulty[]).map((d) => (
                         <button
                           key={d}
                           onClick={() => setDifficulty(d)}
-                          className={`flex-1 py-2.5 px-4 rounded-lg font-medium capitalize text-sm transition ${
+                          className={`flex-1 py-2 md:py-2.5 px-3 md:px-4 rounded-lg font-medium capitalize text-xs md:text-sm transition ${
                             difficulty === d
-                              ? "bg-blue-600 text-white"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                              ? "bg-[#5B6EE8] text-white"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                           }`}
                         >
                           {d}
@@ -268,8 +271,8 @@ export default function EvaluatorDashboard() {
 
                   {/* Question Count */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Number of Questions: <span className="text-blue-600 font-semibold">{questionCount}</span>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Number of Questions: <span className="text-[#5B6EE8] font-semibold">{questionCount}</span>
                     </label>
                     <input
                       type="range"
@@ -278,9 +281,9 @@ export default function EvaluatorDashboard() {
                       step="5"
                       value={questionCount}
                       onChange={(e) => setQuestionCount(Number(e.target.value))}
-                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5B6EE8]"
                     />
-                    <div className="flex justify-between text-xs text-slate-500 mt-1">
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
                       <span>10</span>
                       <span>50</span>
                     </div>
@@ -290,7 +293,7 @@ export default function EvaluatorDashboard() {
                   <Button
                     onClick={handleGenerateQuiz}
                     disabled={!uploadedFile || generating}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                    className="w-full bg-[#5B6EE8] hover:bg-[#4A5AC9] text-white py-2.5 md:py-3"
                   >
                     {generating ? (
                       <>
@@ -306,7 +309,7 @@ export default function EvaluatorDashboard() {
                   </Button>
 
                   {generateError && (
-                    <p className="text-rose-600 text-sm">{generateError}</p>
+                    <p className="text-red-600 text-sm">{generateError}</p>
                   )}
                 </div>
               </div>
@@ -314,59 +317,59 @@ export default function EvaluatorDashboard() {
           </div>
 
           {/* Quizzes List */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h2 className="text-lg font-semibold text-slate-800">Quizzes for Evaluation</h2>
-              <p className="text-slate-500 text-sm">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-100">
+              <h2 className="text-base md:text-lg font-semibold text-gray-900">Quizzes for Evaluation</h2>
+              <p className="text-gray-500 text-xs md:text-sm">
                 Review and evaluate quizzes for taxonomy alignment
               </p>
             </div>
 
             {error && (
-              <div className="mx-6 mt-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg">
+              <div className="mx-4 md:mx-6 mt-4 p-3 md:p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             {quizzes.length === 0 ? (
-              <div className="p-12 text-center">
-                <FileText className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-                <h3 className="text-lg font-medium text-slate-800">No quizzes to evaluate</h3>
-                <p className="text-slate-500 mt-2">
+              <div className="p-8 md:p-12 text-center">
+                <FileText className="w-12 h-12 md:w-16 md:h-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-base md:text-lg font-medium text-gray-900">No quizzes to evaluate</h3>
+                <p className="text-gray-500 text-sm mt-2">
                   Generate a quiz above to start evaluating
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-gray-100">
                 {quizzes.map((quiz) => (
                   <div
                     key={quiz.id}
-                    className="px-6 py-4 hover:bg-slate-50 transition-colors"
+                    className="px-4 md:px-6 py-3 md:py-4 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-1.5">
-                          <h3 className="font-semibold text-slate-800 truncate">{quiz.fileName}</h3>
+                        <div className="flex items-center gap-2 md:gap-3 mb-1.5 flex-wrap">
+                          <h3 className="font-semibold text-gray-900 text-sm md:text-base truncate">{quiz.fileName}</h3>
                           {quiz.evaluationStatus === "evaluated" ? (
-                            <span className="px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                            <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">
                               Evaluated
                             </span>
                           ) : (
-                            <span className="px-2.5 py-1 text-xs rounded-full bg-amber-100 text-amber-700 font-medium">
+                            <span className="px-2 py-0.5 md:px-2.5 md:py-1 text-xs rounded-full bg-amber-100 text-amber-700 font-medium">
                               Pending
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-slate-500">
-                          <span className="flex items-center gap-1.5">
-                            <FileText className="w-4 h-4" />
+                        <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-500 flex-wrap">
+                          <span className="flex items-center gap-1 md:gap-1.5">
+                            <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
                             {quiz.questionCount} questions
                           </span>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getDifficultyColor(quiz.difficulty)}`}>
                             {quiz.difficulty}
                           </span>
-                          <span className="flex items-center gap-1.5">
-                            <Clock className="w-4 h-4" />
+                          <span className="flex items-center gap-1 md:gap-1.5">
+                            <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" />
                             {formatDate(quiz.createdAt)}
                           </span>
                         </div>
@@ -377,11 +380,11 @@ export default function EvaluatorDashboard() {
                             ? `/evaluator/view/${quiz.id}` 
                             : `/evaluator/evaluate/${quiz.id}`
                         )}
-                        className={
+                        className={`w-full md:w-auto text-sm ${
                           quiz.evaluationStatus === "evaluated" 
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }
+                            : "bg-[#5B6EE8] hover:bg-[#4A5AC9] text-white"
+                        }`}
                       >
                         {quiz.evaluationStatus === "evaluated" ? "View Results" : "Evaluate"}
                         <ChevronRight className="w-4 h-4 ml-1" />

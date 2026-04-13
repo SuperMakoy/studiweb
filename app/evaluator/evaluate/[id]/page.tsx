@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import EvaluatorSidebar from "@/components/evaluator/evaluator-sidebar"
+import EvaluatorMobileHeader from "@/components/evaluator/evaluator-mobile-header"
 import {
   getQuizForEvaluation,
   saveEvaluation,
@@ -205,10 +206,11 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-slate-50">
+      <div className="md:flex h-screen bg-gray-50">
+        <EvaluatorMobileHeader />
         <EvaluatorSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-slate-700 text-xl">Loading quiz...</div>
+        <div className="flex-1 flex items-center justify-center pt-14 md:pt-0">
+          <div className="text-gray-700 text-xl">Loading quiz...</div>
         </div>
       </div>
     )
@@ -216,12 +218,13 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
 
   if (!quiz) {
     return (
-      <div className="flex h-screen bg-slate-50">
+      <div className="md:flex h-screen bg-gray-50">
+        <EvaluatorMobileHeader />
         <EvaluatorSidebar />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center pt-14 md:pt-0">
           <div className="text-center">
-            <p className="text-slate-700 text-xl mb-4">Quiz not found</p>
-            <Button onClick={() => router.push("/evaluator/dashboard")}>Back to Dashboard</Button>
+            <p className="text-gray-700 text-xl mb-4">Quiz not found</p>
+            <Button onClick={() => router.push("/evaluator/dashboard")} className="bg-[#5B6EE8] hover:bg-[#4A5AC9] text-white">Back to Dashboard</Button>
           </div>
         </div>
       </div>
@@ -232,47 +235,49 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
   const currentEvaluation = evaluations[currentQuestionIndex]
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="md:flex h-screen bg-gray-50">
+      <EvaluatorMobileHeader />
       <EvaluatorSidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden pt-14 md:pt-0">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-2 md:py-3 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
+          <div className="flex items-center gap-2 md:gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => router.push("/evaluator/dashboard")}
-              className="text-slate-600 hover:text-slate-800"
+              className="text-gray-600 hover:text-gray-800 px-2 md:px-3"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Dashboard
+              <ArrowLeft className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Dashboard</span>
             </Button>
-            <div className="h-6 w-px bg-slate-200" />
+            <div className="h-6 w-px bg-gray-200 hidden md:block" />
             <div>
-              <h1 className="font-semibold text-slate-800">{quiz.fileName}</h1>
-              <p className="text-sm text-slate-500 capitalize">{quiz.difficulty} difficulty</p>
+              <h1 className="font-semibold text-gray-900 text-sm md:text-base truncate max-w-[150px] md:max-w-none">{quiz.fileName}</h1>
+              <p className="text-xs md:text-sm text-gray-500 capitalize">{quiz.difficulty} difficulty</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-600">
-              Question {currentQuestionIndex + 1} of {quiz.questions.length}
+          <div className="flex items-center gap-2 md:gap-3 justify-between md:justify-end">
+            <span className="text-xs md:text-sm text-gray-600">
+              Q {currentQuestionIndex + 1}/{quiz.questions.length}
             </span>
             <Button
               onClick={handleSave}
               disabled={saving}
               variant="outline"
               size="sm"
+              className="text-xs md:text-sm"
             >
               {saved ? (
                 <>
-                  <CheckCircle className="w-4 h-4 mr-2 text-emerald-600" />
+                  <CheckCircle className="w-4 h-4 mr-1 md:mr-2 text-emerald-600" />
                   Saved
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4 mr-2" />
-                  {saving ? "Saving..." : "Save Progress"}
+                  <Save className="w-4 h-4 mr-1 md:mr-2" />
+                  {saving ? "Saving..." : "Save"}
                 </>
               )}
             </Button>
@@ -280,47 +285,47 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-4 md:p-6">
           {error && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg mb-6">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-3 md:px-4 py-2 md:py-3 rounded-lg mb-4 md:mb-6 text-sm">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
             {/* Left Side - Quiz Question */}
-            <div className="bg-white rounded-xl p-6 border border-slate-200 h-fit">
-              <div className="mb-4">
-                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
+            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 h-fit">
+              <div className="mb-3 md:mb-4">
+                <span className="text-xs font-medium px-2 md:px-2.5 py-1 rounded-full bg-[#5B6EE8]/10 text-[#5B6EE8]">
                   AI Assigned: {currentQuestion.cognitiveLevel || "Not specified"}
                 </span>
               </div>
 
-              <h2 className="text-lg font-semibold text-slate-800 mb-6">{currentQuestion.question}</h2>
+              <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4 md:mb-6">{currentQuestion.question}</h2>
 
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 {currentQuestion.options.map((option, index) => {
                   const isCorrect = currentQuestion.correctAnswers.includes(index)
                   return (
                     <div
                       key={index}
-                      className={`p-4 rounded-lg border-2 ${
+                      className={`p-3 md:p-4 rounded-lg border-2 ${
                         isCorrect
                           ? "border-emerald-500 bg-emerald-50"
-                          : "border-slate-200 bg-slate-50"
+                          : "border-gray-200 bg-gray-50"
                       }`}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2 md:gap-3">
                         <span
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
+                          className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-xs md:text-sm font-medium flex-shrink-0 ${
                             isCorrect
                               ? "bg-emerald-500 text-white"
-                              : "bg-slate-300 text-slate-700"
+                              : "bg-gray-300 text-gray-700"
                           }`}
                         >
                           {String.fromCharCode(65 + index)}
                         </span>
-                        <span className={isCorrect ? "text-emerald-900 font-medium" : "text-slate-700"}>
+                        <span className={`text-sm md:text-base ${isCorrect ? "text-emerald-900 font-medium" : "text-gray-700"}`}>
                           {option}
                         </span>
                       </div>
@@ -330,52 +335,53 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
               </div>
 
               {currentQuestion.correctAnswers.length > 0 && (
-                <p className="mt-4 text-sm text-slate-500">
+                <p className="mt-3 md:mt-4 text-xs md:text-sm text-gray-500">
                   Correct answer: {currentQuestion.correctAnswers.map((i) => String.fromCharCode(65 + i)).join(", ")}
                 </p>
               )}
             </div>
 
             {/* Right Side - Evaluation Form with 4-Criteria Rubric */}
-            <div className="bg-white rounded-xl p-6 border border-slate-200">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-slate-800">Evaluation Rubric</h3>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Info className="w-4 h-4" />
-                  <span>Rate each criterion 1-5</span>
+            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200">
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900">Evaluation Rubric</h3>
+                <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm text-gray-500">
+                  <Info className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  <span className="hidden sm:inline">Rate each criterion 1-5</span>
+                  <span className="sm:hidden">1-5</span>
                 </div>
               </div>
 
               {/* 4-Criteria Rubric */}
-              <div className="space-y-6 mb-6">
+              <div className="space-y-4 md:space-y-6 mb-4 md:mb-6">
                 {RUBRIC_CRITERIA.map((criterion) => (
-                  <div key={criterion.key} className="bg-slate-50 rounded-lg p-4">
+                  <div key={criterion.key} className="bg-gray-50 rounded-lg p-3 md:p-4">
                     <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-medium text-slate-800">{criterion.label}</h4>
-                        <p className="text-xs text-slate-500">{criterion.description}</p>
+                      <div className="flex-1 min-w-0 pr-2">
+                        <h4 className="font-medium text-gray-900 text-sm md:text-base">{criterion.label}</h4>
+                        <p className="text-xs text-gray-500 hidden sm:block">{criterion.description}</p>
                       </div>
-                      <span className="text-lg font-bold text-blue-600">
+                      <span className="text-base md:text-lg font-bold text-[#5B6EE8]">
                         {currentEvaluation?.rubricScores?.[criterion.key] || 3}
                       </span>
                     </div>
-                    <div className="flex gap-1.5 mt-3">
+                    <div className="flex gap-1 md:gap-1.5 mt-2 md:mt-3">
                       {[1, 2, 3, 4, 5].map((score) => (
                         <button
                           key={score}
                           onClick={() => handleRubricChange(criterion.key, score)}
                           title={criterion.scoreDescriptions[score as 1|2|3|4|5]}
-                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+                          className={`flex-1 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
                             currentEvaluation?.rubricScores?.[criterion.key] === score
-                              ? "bg-blue-600 text-white shadow-sm"
-                              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                              ? "bg-[#5B6EE8] text-white shadow-sm"
+                              : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
                           }`}
                         >
                           {score}
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-slate-400 mt-2 text-center">
+                    <p className="text-xs text-gray-400 mt-2 text-center hidden sm:block">
                       {criterion.scoreDescriptions[currentEvaluation?.rubricScores?.[criterion.key] as 1|2|3|4|5 || 3]}
                     </p>
                   </div>
@@ -383,35 +389,35 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
               </div>
 
               {/* Overall Score Display */}
-              <div className="bg-blue-50 rounded-lg p-4 mb-6">
+              <div className="bg-[#5B6EE8]/10 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-blue-800">Overall Alignment Score</h4>
-                    <p className="text-xs text-blue-600">Average of all criteria</p>
+                    <h4 className="font-medium text-[#5B6EE8] text-sm md:text-base">Overall Alignment Score</h4>
+                    <p className="text-xs text-[#5B6EE8]/70">Average of all criteria</p>
                   </div>
-                  <div className="text-3xl font-bold text-blue-600">
+                  <div className="text-2xl md:text-3xl font-bold text-[#5B6EE8]">
                     {currentEvaluation?.alignmentScore || 3}/5
                   </div>
                 </div>
               </div>
 
               {/* Suggested Level */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+              <div className="mb-4 md:mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Your Suggested Cognitive Level
                 </label>
-                <p className="text-xs text-slate-500 mb-3">
+                <p className="text-xs text-gray-500 mb-2 md:mb-3 hidden sm:block">
                   What level do you think this question actually tests?
                 </p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5 md:gap-2">
                   {COGNITIVE_LEVELS.map((level) => (
                     <button
                       key={level}
                       onClick={() => handleLevelChange(level)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`px-2 md:px-3 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
                         currentEvaluation?.suggestedLevel === level
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          ? "bg-[#5B6EE8] text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
                       {level}
@@ -422,30 +428,31 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
 
               {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Evaluator Notes</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Evaluator Notes</label>
                 <Textarea
                   value={currentEvaluation?.notes || ""}
                   onChange={(e) => handleNotesChange(e.target.value)}
                   placeholder="Add comments, suggestions, or observations about this question..."
                   rows={3}
-                  className="w-full resize-none"
+                  className="w-full resize-none text-sm"
                 />
               </div>
             </div>
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center justify-between mt-4 md:mt-6 gap-2">
             <Button
               variant="outline"
               onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
               disabled={currentQuestionIndex === 0}
+              className="text-xs md:text-sm px-2 md:px-4"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Previous
+              <ArrowLeft className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Previous</span>
             </Button>
 
-            <div className="flex gap-1.5 flex-wrap justify-center max-w-md">
+            <div className="flex gap-1 md:gap-1.5 flex-wrap justify-center max-w-[180px] md:max-w-md overflow-hidden">
               {quiz.questions.map((_, index) => {
                 const hasEvaluation = evaluations[index]?.notes || 
                   evaluations[index]?.alignmentScore !== 3 ||
@@ -454,12 +461,12 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
                   <button
                     key={index}
                     onClick={() => setCurrentQuestionIndex(index)}
-                    className={`w-8 h-8 rounded-full text-sm font-medium transition-all ${
+                    className={`w-6 h-6 md:w-8 md:h-8 rounded-full text-xs md:text-sm font-medium transition-all ${
                       index === currentQuestionIndex
-                        ? "bg-blue-600 text-white"
+                        ? "bg-[#5B6EE8] text-white"
                         : hasEvaluation
                         ? "bg-emerald-100 text-emerald-700"
-                        : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
                     {index + 1}
@@ -469,18 +476,19 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
             </div>
 
             {currentQuestionIndex === quiz.questions.length - 1 ? (
-              <Button onClick={handleFinish} className="bg-emerald-600 hover:bg-emerald-700">
-                Finish & Save
-                <CheckCircle className="w-4 h-4 ml-2" />
+              <Button onClick={handleFinish} className="bg-emerald-600 hover:bg-emerald-700 text-xs md:text-sm px-2 md:px-4">
+                <span className="hidden md:inline">Finish & Save</span>
+                <span className="md:hidden">Done</span>
+                <CheckCircle className="w-4 h-4 md:ml-2" />
               </Button>
             ) : (
               <Button
                 onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
                 disabled={currentQuestionIndex === quiz.questions.length - 1}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-[#5B6EE8] hover:bg-[#4A5AC9] text-xs md:text-sm px-2 md:px-4"
               >
-                Next
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <span className="hidden md:inline">Next</span>
+                <ArrowRight className="w-4 h-4 md:ml-2" />
               </Button>
             )}
           </div>

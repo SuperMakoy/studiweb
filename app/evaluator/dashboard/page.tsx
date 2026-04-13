@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { getQuizzesForEvaluation, type QuizForEvaluation } from "@/lib/evaluation-service"
 import EvaluatorSidebar from "@/components/evaluator/evaluator-sidebar"
 import EvaluatorMobileHeader from "@/components/evaluator/evaluator-mobile-header"
-import { FileText, Clock, ChevronRight, Upload, Loader2, ClipboardCheck, AlertCircle, CheckCircle2 } from "lucide-react"
+import { FileText, Clock, ChevronRight, Upload, Loader2, ClipboardCheck } from "lucide-react"
 
 type Difficulty = "easy" | "moderate" | "hard"
 
@@ -133,10 +133,6 @@ export default function EvaluatorDashboard() {
     }
   }
 
-  // Stats
-  const pendingCount = quizzes.filter((q) => q.evaluationStatus === "pending").length
-  const evaluatedCount = quizzes.filter((q) => q.evaluationStatus === "evaluated").length
-
   if (loading) {
     return (
       <div className="md:flex h-screen bg-gray-50">
@@ -169,45 +165,6 @@ export default function EvaluatorDashboard() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto p-4 md:p-8">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-[#5B6EE8]/10 rounded-xl flex items-center justify-center">
-                  <FileText className="w-5 h-5 md:w-6 md:h-6 text-[#5B6EE8]" />
-                </div>
-                <div>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">{quizzes.length}</p>
-                  <p className="text-gray-500 text-xs md:text-sm">Total Quizzes</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">{pendingCount}</p>
-                  <p className="text-gray-500 text-xs md:text-sm">Pending Review</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">{evaluatedCount}</p>
-                  <p className="text-gray-500 text-xs md:text-sm">Evaluated</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Generate Quiz Section */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6 md:mb-8">
             <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-100">

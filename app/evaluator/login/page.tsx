@@ -3,7 +3,9 @@
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { User, KeyRound } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import Navbar from "@/components/navbar"
 
 // Hardcoded evaluator credentials for capstone project
 const EVALUATOR_CREDENTIALS = {
@@ -50,115 +52,115 @@ export default function EvaluatorLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 flex items-center justify-center p-4">
-      {/* Background blur effect */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')] opacity-5" />
+    <div className="min-h-screen bg-white relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-20 left-10 opacity-20 hidden md:block">
+        <img src="/decorative-book.svg" alt="" className="w-16 h-16" />
+      </div>
+      <div className="absolute top-40 right-20 opacity-20 hidden md:block">
+        <img src="/decorative-pencil.svg" alt="" className="w-12 h-12" />
+      </div>
+      <div className="absolute bottom-32 left-1/4 opacity-20 hidden md:block">
+        <img src="/decorative-lightbulb.svg" alt="" className="w-14 h-14" />
+      </div>
+      <div className="absolute bottom-20 right-16 opacity-20 hidden md:block">
+        <img src="/decorative-star.svg" alt="" className="w-10 h-10" />
+      </div>
+
+      <Navbar />
       
-      <div className="relative w-full max-w-md">
-        {/* Login Card */}
-        <div className="bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-slate-700/50">
-          {/* Card Header */}
-          <div className="pt-10 pb-6 px-8 text-center">
-            {/* Logo */}
-            <div className="flex items-center justify-center gap-1 mb-6">
-              <div className="grid grid-cols-2 gap-0.5">
-                <div className="w-3 h-3 bg-amber-500 rounded-sm" />
-                <div className="w-3 h-3 bg-blue-500 rounded-sm" />
-                <div className="w-3 h-3 bg-green-500 rounded-sm" />
-                <div className="w-3 h-3 bg-red-500 rounded-sm" />
-              </div>
-              <span className="text-3xl font-bold text-white ml-2">STUDI</span>
+      <main className="flex flex-col md:flex-row items-center justify-between px-4 md:px-8 lg:px-16 py-8 md:py-20 relative z-10 gap-8">
+        {/* Left Side - Illustration */}
+        <div className="w-full md:w-1/2 flex justify-center hidden sm:flex">
+          <div className="flex flex-col items-center justify-center relative">
+            <div className="absolute -top-8 -left-8 hidden lg:block">
+              <img src="/decorative-trophy.svg" alt="" className="w-12 h-12 opacity-60" />
             </div>
-            
-            <h1 className="text-xl font-semibold text-blue-400 tracking-wide">EVALUATOR PANEL</h1>
-            <p className="text-slate-400 text-sm mt-1">Taxonomy evaluation portal</p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="px-8 pb-4">
-            {/* Email Field */}
-            <div className="mb-4">
-              <div className="flex items-center gap-3 border-b border-slate-600 pb-3 focus-within:border-blue-500 transition-colors">
-                <User className="w-5 h-5 text-slate-500" />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="evaluator email"
-                  className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
-                  required
-                />
-              </div>
+            <div className="absolute -bottom-4 -right-4 hidden lg:block">
+              <img src="/decorative-checkmark.svg" alt="" className="w-10 h-10 opacity-60" />
             </div>
 
-            {/* Password Field */}
-            <div className="mb-6">
-              <div className="flex items-center gap-3 border-b border-slate-600 pb-3 focus-within:border-blue-500 transition-colors">
-                <KeyRound className="w-5 h-5 text-slate-500" />
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="password"
-                  className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg text-sm text-center">
-                {error}
-              </div>
-            )}
-
-            {/* Login Button */}
-            <div className="flex justify-center mb-6">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-10 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-full shadow-lg shadow-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Signing in..." : "Login"}
-              </button>
-            </div>
-          </form>
-
-          {/* Wave Decoration */}
-          <div className="relative h-24">
-            <svg
-              className="absolute bottom-0 w-full"
-              viewBox="0 0 400 100"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0,60 C50,80 100,40 150,50 C200,60 250,80 300,60 C350,40 400,70 400,70 L400,100 L0,100 Z"
-                fill="#4a6fa5"
-                opacity="0.6"
+            {/* Vector Image Container */}
+            <div className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 flex items-center justify-center">
+              <img
+                src="/login-illustration.svg"
+                alt="Evaluator login illustration"
+                className="w-full h-full object-contain"
               />
-              <path
-                d="M0,70 C80,90 120,50 180,60 C240,70 280,90 320,70 C360,50 400,80 400,80 L400,100 L0,100 Z"
-                fill="#5b7db1"
-                opacity="0.8"
-              />
-              <path
-                d="M0,80 C60,95 100,70 160,75 C220,80 260,95 300,80 C340,65 400,85 400,85 L400,100 L0,100 Z"
-                fill="#6b8cbe"
-              />
-            </svg>
+            </div>
+            {/* Descriptive Text */}
+            <div className="mt-4 md:mt-8 text-center max-w-md px-4">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">Evaluator Portal</h2>
+              <p className="text-sm md:text-base text-gray-600 leading-relaxed">
+                Access the taxonomy evaluation system to review and assess AI-generated quiz questions 
+                using Anderson & Krathwohl&apos;s revised Bloom&apos;s Taxonomy framework.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Back to main site link */}
-        <p className="text-center mt-6 text-slate-500 text-sm">
-          <a href="/" className="hover:text-slate-400 transition-colors">
-            Back to main site
-          </a>
-        </p>
-      </div>
+        {/* Right Side - Form */}
+        <div className="w-full md:w-1/2 md:pl-12 relative">
+          <div className="absolute -top-4 right-20 opacity-30 hidden lg:block">
+            <img src="/decorative-brain.svg" alt="" className="w-14 h-14" />
+          </div>
+
+          <div className="inline-block px-3 py-1 bg-[#5B6EE8]/10 text-[#5B6EE8] text-sm font-medium rounded-full mb-4">
+            Evaluator Access
+          </div>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">Welcome, Evaluator</h1>
+          <p className="text-base md:text-lg text-gray-600 mb-6 md:mb-8">Sign in to the evaluation portal</p>
+
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+            {/* Email */}
+            <div>
+              <label className="text-gray-800 font-semibold mb-2 block text-sm md:text-base">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter evaluator email"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#5B6EE8] transition text-sm md:text-base"
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="text-gray-800 font-semibold mb-2 block text-sm md:text-base">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter password"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#5B6EE8] transition text-sm md:text-base"
+                required
+              />
+            </div>
+
+            {/* Error Message */}
+            {error && <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm">{error}</div>}
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#5B6EE8] text-white py-3 font-bold text-base md:text-lg rounded-lg hover:bg-[#4A5AC9] transition"
+            >
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
+
+            {/* Back to main site */}
+            <p className="text-center text-gray-600 text-sm md:text-base">
+              <Link href="/" className="text-[#5B6EE8] font-bold hover:underline">
+                Back to main site
+              </Link>
+            </p>
+          </form>
+        </div>
+      </main>
     </div>
   )
 }

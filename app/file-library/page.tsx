@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/use-auth"
 import Sidebar from "@/components/dashboard/sidebar"
 import MobileHeaderNav from "@/components/dashboard/mobile-header-nav"
 import FileGrid from "@/components/file-library/file-grid"
-import { Trash2 } from "lucide-react"
 import FileUploadButton from "@/components/file-library/file-upload-button"
 
 export default function FileLibraryPage() {
@@ -19,11 +18,7 @@ export default function FileLibraryPage() {
 
   useEffect(() => {
     if (loading) return
-    if (!user) {
-      setIsLoading(false)
-      return
-    }
-
+    if (!user) { setIsLoading(false); return }
     const loadFiles = async () => {
       try {
         const userFiles = await getUserFiles()
@@ -37,39 +32,29 @@ export default function FileLibraryPage() {
         setIsLoading(false)
       }
     }
-
     loadFiles()
   }, [user, loading])
 
   const handleSearchChange = (fileName: string) => {
     const filtered = fileName.trim()
-      ? files.filter((file) => file.fileName.toLowerCase().includes(fileName.toLowerCase()))
+      ? files.filter((f) => f.fileName.toLowerCase().includes(fileName.toLowerCase()))
       : files
     setFilteredFiles(filtered)
   }
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedFiles(new Set(filteredFiles.map((f) => f.id)))
-    } else {
-      setSelectedFiles(new Set())
-    }
+    setSelectedFiles(checked ? new Set(filteredFiles.map((f) => f.id)) : new Set())
   }
 
   const handleToggleFile = (fileId: string) => {
     const newSelected = new Set(selectedFiles)
-    if (newSelected.has(fileId)) {
-      newSelected.delete(fileId)
-    } else {
-      newSelected.add(fileId)
-    }
+    newSelected.has(fileId) ? newSelected.delete(fileId) : newSelected.add(fileId)
     setSelectedFiles(newSelected)
   }
 
   const handleDeleteSelected = async () => {
     if (selectedFiles.size === 0) return
     if (!confirm(`Delete ${selectedFiles.size} file(s)? This cannot be undone.`)) return
-
     setIsDeleting(true)
     try {
       await deleteMultipleFiles(Array.from(selectedFiles))
@@ -87,77 +72,390 @@ export default function FileLibraryPage() {
 
   const handleFileAdd = (newFile: any) => {
     const updatedFiles = [...files, newFile].sort((a, b) =>
-      (a.displayName || a.fileName).localeCompare(b.displayName || b.fileName),
+      (a.displayName || a.fileName).localeCompare(b.displayName || b.fileName)
     )
     setFiles(updatedFiles)
     setFilteredFiles(updatedFiles)
   }
 
-  if (isLoading) {
-    return (
-      <div className="md:flex h-screen bg-white">
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+        .fl-page * { box-sizing: border-box; }
+        .fl-page { font-family: 'DM Sans', 'Segoe UI', sans-serif; }
+        .fl-checkbox { accent-color: #5B6EE8; }
+        .fl-search-wrap input {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 100px;
+          color: #fff;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 13px;
+          padding: 8px 16px 8px 38px;
+          outline: none;
+          width: 100%;
+          transition: border-color .2s;
+        }
+        .fl-search-wrap input::placeholder { color: rgba(255,255,255,0.25); }
+        .fl-search-wrap input:focus { border-color: #5B6EE8; }
+        @keyframes flBlob {
+          0%,100% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+        }
+        .fl-blob { animation: flBlob ease-in-out infinite; }
+      `}</style>
+
+      <div
+        className="fl-page"
+        style={{
+          display: "flex",
+          height: "100vh",
+          overflow: "hidden",
+          background: "#07071a",
+          color: "#fff",
+          position: "relative",
+        }}
+      >
+        {/* Ambient blobs */}
+        <div
+          className="fl-blob"
+          style={{
+            position: "fixed",
+            width: 320,
+            height: 320,
+            borderRadius: "50%",
+            background: "rgba(91,110,232,0.08)",
+            filter: "blur(80px)",
+            top: -60,
+            left: 220,
+            animationDuration: "9s",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+        <div
+          className="fl-blob"
+          style={{
+            position: "fixed",
+            width: 240,
+            height: 240,
+            borderRadius: "50%",
+            background: "rgba(123,94,167,0.06)",
+            filter: "blur(70px)",
+            bottom: 60,
+            right: 60,
+            animationDuration: "13s",
+            animationDelay: "4s",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+
         <MobileHeaderNav />
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center pt-16 md:pt-0">
-          <div className="text-gray-500">Loading files...</div>
-        </div>
-      </div>
-    )
-  }
 
-  return (
-    <div className="md:flex h-screen bg-white">
-      <MobileHeaderNav />
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
-        <div className="bg-white border-b border-gray-200 p-4 md:p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-4 md:mb-6">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">File Library</h1>
-              <FileUploadButton onFileAdd={handleFileAdd} />
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            paddingTop: 0,
+            position: "relative",
+            zIndex: 1,
+          }}
+          className="pt-14 md:pt-0"
+        >
+          {/* Top bar */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "18px 28px",
+              borderBottom: "1px solid rgba(255,255,255,0.05)",
+              background: "rgba(7,7,26,0.85)",
+              backdropFilter: "blur(12px)",
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <div>
+              <h1
+                style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontSize: 20,
+                  fontWeight: 800,
+                  color: "#fff",
+                  margin: 0,
+                }}
+              >
+                File Library
+              </h1>
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>
+                {filteredFiles.length} file{filteredFiles.length !== 1 ? "s" : ""}
+              </p>
             </div>
 
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              {/* Select all */}
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                 <input
                   type="checkbox"
+                  className="fl-checkbox"
                   checked={selectedFiles.size === filteredFiles.length && filteredFiles.length > 0}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                  style={{ width: 16, height: 16, cursor: "pointer", borderRadius: 4 }}
                 />
-                <label className="text-gray-900 font-semibold cursor-pointer text-sm md:text-base">Select All</label>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.6)" }}>
+                  Select All
+                </span>
+              </label>
 
-                {selectedFiles.size > 0 && (
-                  <button
-                    onClick={handleDeleteSelected}
-                    disabled={isDeleting}
-                    className="ml-2 md:ml-4 bg-red-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 transition font-medium disabled:opacity-50 text-sm md:text-base"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete ({selectedFiles.size})
-                  </button>
-                )}
+              {selectedFiles.size > 0 && (
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={isDeleting}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "#ff8f8f",
+                    background: "rgba(255,107,107,0.1)",
+                    border: "1px solid rgba(255,107,107,0.25)",
+                    cursor: "pointer",
+                    transition: "all .2s",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {isDeleting ? "Deleting…" : `Delete (${selectedFiles.size})`}
+                </button>
+              )}
+
+              {/* Search */}
+              <div className="fl-search-wrap" style={{ position: "relative", minWidth: 200 }}>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    opacity: 0.4,
+                  }}
+                >
+                  <circle cx="6" cy="6" r="4.5" stroke="#fff" strokeWidth="1.3" />
+                  <path d="M9.5 9.5l2.5 2.5" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+                <SmartFileSearch files={files} onSelectFileName={handleSearchChange} />
               </div>
 
-              <SmartFileSearch files={files} onSelectFileName={handleSearchChange} />
+              <FileUploadButton onFileAdd={handleFileAdd} />
             </div>
           </div>
-        </div>
 
-        <div className="flex-1 overflow-auto p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            {filteredFiles.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-base md:text-lg">
+          {/* Main content */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+            {isLoading ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: 200,
+                  color: "rgba(255,255,255,0.4)",
+                  fontSize: 14,
+                }}
+              >
+                Loading files…
+              </div>
+            ) : filteredFiles.length === 0 ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: 300,
+                  gap: 16,
+                  color: "rgba(255,255,255,0.3)",
+                }}
+              >
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.4">
+                  <rect x="8" y="8" width="32" height="32" rx="6" stroke="currentColor" strokeWidth="2" />
+                  <path d="M16 24h16M16 18h16M16 30h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <p style={{ fontSize: 14 }}>
                   {files.length === 0 ? "No files yet. Upload a file to get started!" : "No files match your search."}
                 </p>
               </div>
             ) : (
-              <FileGrid files={filteredFiles} selectedFiles={selectedFiles} onToggleSelection={handleToggleFile} />
+              <DarkFileGrid
+                files={filteredFiles}
+                selectedFiles={selectedFiles}
+                onToggleSelection={handleToggleFile}
+              />
             )}
           </div>
         </div>
       </div>
+    </>
+  )
+}
+
+// Dark-themed file grid replacing the old gray cards
+function DarkFileGrid({
+  files,
+  selectedFiles,
+  onToggleSelection,
+}: {
+  files: any[]
+  selectedFiles: Set<string>
+  onToggleSelection: (id: string) => void
+}) {
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 B"
+    const k = 1024
+    const sizes = ["B", "KB", "MB"]
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
+  }
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+        gap: 16,
+      }}
+    >
+      {files.map((file) => {
+        const selected = selectedFiles.has(file.id)
+        return (
+          <div key={file.id} style={{ position: "relative" }}>
+            <a
+              href={`/file-library/${file.id}`}
+              style={{ textDecoration: "none" }}
+            >
+              <div
+                style={{
+                  background: selected
+                    ? "rgba(91,110,232,0.12)"
+                    : "rgba(255,255,255,0.04)",
+                  border: selected
+                    ? "1px solid rgba(91,110,232,0.4)"
+                    : "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 16,
+                  padding: 16,
+                  cursor: "pointer",
+                  transition: "all .2s",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+                onMouseEnter={(e) => {
+                  if (!selected) {
+                    ;(e.currentTarget as HTMLElement).style.borderColor =
+                      "rgba(91,110,232,0.35)"
+                    ;(e.currentTarget as HTMLElement).style.transform =
+                      "translateY(-2px)"
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!selected) {
+                    ;(e.currentTarget as HTMLElement).style.borderColor =
+                      "rgba(255,255,255,0.08)"
+                    ;(e.currentTarget as HTMLElement).style.transform =
+                      "translateY(0)"
+                  }
+                }}
+              >
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 14,
+                    background: "linear-gradient(135deg,#FFD43B,#FFA94D)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 26,
+                    flexShrink: 0,
+                  }}
+                >
+                  📁
+                </div>
+                <div style={{ textAlign: "center", width: "100%" }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#fff",
+                      marginBottom: 4,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {file.displayName || file.fileName}
+                  </div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>
+                    {formatFileSize(file.fileSize)}
+                  </div>
+                </div>
+              </div>
+            </a>
+
+            {/* Checkbox */}
+            <div
+              style={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                width: 20,
+                height: 20,
+                borderRadius: 6,
+                background: selected ? "#5B6EE8" : "rgba(0,0,0,0.5)",
+                border: selected
+                  ? "1.5px solid #5B6EE8"
+                  : "1.5px solid rgba(255,255,255,0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "all .15s",
+                backdropFilter: "blur(4px)",
+              }}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onToggleSelection(file.id)
+              }}
+            >
+              {selected && (
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path
+                    d="M1.5 5l2.5 2.5 4.5-5"
+                    stroke="#fff"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

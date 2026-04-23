@@ -14,16 +14,53 @@ import { useAuth } from "@/hooks/use-auth"
 import Sidebar from "@/components/dashboard/sidebar"
 import DashboardHeader from "@/components/dashboard/header"
 import MobileHeaderNav from "@/components/dashboard/mobile-header-nav"
-import QuizCustomizationModal, { type QuizCustomizationConfig } from "@/components/quiz/quiz-customization-modal"
+import QuizCustomizationModal, {
+  type QuizCustomizationConfig,
+} from "@/components/quiz/quiz-customization-modal"
 import QuizHistoryCard from "@/components/quiz/quiz-history-card"
-import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from "recharts"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import {
+  Bar,
+  BarChart,
+  Pie,
+  PieChart,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+} from "recharts"
 
+// ── types & helpers ────────────────────────────────────────────────────────
 interface FilePreviewClientProps {
   fileId: string
 }
 
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return "0 B"
+  const k = 1024
+  const sizes = ["B", "KB", "MB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
+}
+
+// ── styles ─────────────────────────────────────────────────────────────────
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+  .fpc-wrap * { box-sizing: border-box; }
+  .fpc-wrap { font-family: 'DM Sans', 'Segoe UI', sans-serif; }
+  .fpc-action-btn { transition: all .2s; cursor: pointer; font-family: inherit; }
+  .fpc-action-btn:hover:not(:disabled) { transform: translateY(-2px); }
+  .fpc-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  @keyframes fpcBlob {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+  }
+  .fpc-blob { animation: fpcBlob ease-in-out infinite; position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+  .fpc-stat-card:hover { border-color: rgba(91,110,232,0.3) !important; transform: translateY(-1px); }
+`
+
+// ── main component ─────────────────────────────────────────────────────────
 export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
   const router = useRouter()
   const { user, loading } = useAuth()
@@ -37,386 +74,549 @@ export default function FilePreviewClient({ fileId }: FilePreviewClientProps) {
   const [loadingFile, setLoadingFile] = useState(true)
   const [showCustomizationModal, setShowCustomizationModal] = useState(false)
 
+  // ── data fetching — logic unchanged ────────────────────────────────────
   useEffect(() => {
     if (loading) return
-
     if (!user) {
       setError("Please log in to view this file")
       setLoadingFile(false)
       return
     }
-
     const fetchFile = async () => {
       try {
         const fetchedFile = await getStudyFileById(user.uid, fileId)
-
-        if (!fetchedFile) {
-          setError("File not found")
-          setLoadingFile(false)
-          return
-        }
-
+        if (!fetchedFile) { setError("File not found"); setLoadingFile(false); return }
         setFile(fetchedFile)
-
-        const objectUrl = base64ToObjectUrl(fetchedFile.fileData, fetchedFile.fileType)
-        setFileObjectUrl(objectUrl)
+        setFileObjectUrl(base64ToObjectUrl(fetchedFile.fileData, fetchedFile.fileType))
       } catch (err) {
-        console.error("Error fetching file:", err)
         setError("Error loading file")
       } finally {
         setLoadingFile(false)
       }
     }
-
     fetchFile()
   }, [user, loading, fileId])
 
   useEffect(() => {
     if (loading || !user) return
-
     const loadFileQuizHistory = async () => {
       try {
         setLoadingStats(true)
         const history = await getQuizHistory()
-        const filteredHistory = history.filter((quiz) => quiz.fileId === fileId)
-        setFileQuizHistory(filteredHistory)
+        setFileQuizHistory(history.filter((quiz) => quiz.fileId === fileId))
       } catch (error) {
-        console.error("Error loading quiz history:", error)
         setFileQuizHistory([])
       } finally {
         setLoadingStats(false)
       }
     }
-
     loadFileQuizHistory()
   }, [user, loading, fileId])
 
   const handleDelete = async () => {
     if (!user || !confirm("Are you sure you want to delete this file?")) return
-
     setDeleting(true)
     try {
       await deleteStudyFile(fileId)
       router.push("/file-library")
     } catch (error) {
-      console.error("Error deleting file:", error)
       setDeleting(false)
     }
   }
 
-  const handleStartQuiz = async () => {
-    setShowCustomizationModal(true)
-  }
+  const handleStartQuiz = () => setShowCustomizationModal(true)
 
   const handleQuizCustomizationConfirm = async (config: QuizCustomizationConfig) => {
     setGeneratingQuiz(true)
     try {
       router.push(`/quiz/${fileId}?length=${config.length}&difficulty=${config.difficulty}`)
     } catch (error) {
-      console.error("Error navigating to quiz:", error)
       setGeneratingQuiz(false)
     }
   }
+  // ───────────────────────────────────────────────────────────────────────
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
-  }
-
+  // ── chart data — logic unchanged ───────────────────────────────────────
   const difficultyData = [
-    { name: "Easy", value: fileQuizHistory.filter((q) => q.difficulty === "easy").length, color: "#51CF66" },
+    { name: "Easy",     value: fileQuizHistory.filter((q) => q.difficulty === "easy").length,     color: "#51CF66" },
     { name: "Moderate", value: fileQuizHistory.filter((q) => q.difficulty === "moderate").length, color: "#FFD43B" },
-    { name: "Hard", value: fileQuizHistory.filter((q) => q.difficulty === "hard").length, color: "#FF6B6B" },
+    { name: "Hard",     value: fileQuizHistory.filter((q) => q.difficulty === "hard").length,     color: "#FF6B6B" },
   ].filter((d) => d.value > 0)
 
-  const averageScoresByDifficulty = [
-    {
-      difficulty: "Easy",
-      avgScore:
-        fileQuizHistory.filter((q) => q.difficulty === "easy").length > 0
-          ? Math.round(
-              (fileQuizHistory
-                .filter((q) => q.difficulty === "easy")
-                .reduce((sum, q) => sum + (q.score / q.totalQuestions) * 100, 0) /
-                fileQuizHistory.filter((q) => q.difficulty === "easy").length) *
-                10,
-            ) / 10
-          : 0,
-      color: "#51CF66",
-      count: fileQuizHistory.filter((q) => q.difficulty === "easy").length,
-    },
-    {
-      difficulty: "Moderate",
-      avgScore:
-        fileQuizHistory.filter((q) => q.difficulty === "moderate").length > 0
-          ? Math.round(
-              (fileQuizHistory
-                .filter((q) => q.difficulty === "moderate")
-                .reduce((sum, q) => sum + (q.score / q.totalQuestions) * 100, 0) /
-                fileQuizHistory.filter((q) => q.difficulty === "moderate").length) *
-                10,
-            ) / 10
-          : 0,
-      color: "#FFD43B",
-      count: fileQuizHistory.filter((q) => q.difficulty === "moderate").length,
-    },
-    {
-      difficulty: "Hard",
-      avgScore:
-        fileQuizHistory.filter((q) => q.difficulty === "hard").length > 0
-          ? Math.round(
-              (fileQuizHistory
-                .filter((q) => q.difficulty === "hard")
-                .reduce((sum, q) => sum + (q.score / q.totalQuestions) * 100, 0) /
-                fileQuizHistory.filter((q) => q.difficulty === "hard").length) *
-                10,
-            ) / 10
-          : 0,
-      color: "#FF6B6B",
-      count: fileQuizHistory.filter((q) => q.difficulty === "hard").length,
-    },
-  ].filter((d) => d.count > 0)
+  const averageScoresByDifficulty = ["easy", "moderate", "hard"].map((diff) => {
+    const filtered = fileQuizHistory.filter((q) => q.difficulty === diff)
+    return {
+      difficulty: diff.charAt(0).toUpperCase() + diff.slice(1),
+      avgScore: filtered.length > 0
+        ? Math.round((filtered.reduce((sum, q) => sum + (q.score / q.totalQuestions) * 100, 0) / filtered.length) * 10) / 10
+        : 0,
+      color: diff === "easy" ? "#51CF66" : diff === "moderate" ? "#FFD43B" : "#FF6B6B",
+      count: filtered.length,
+    }
+  }).filter((d) => d.count > 0)
+  // ───────────────────────────────────────────────────────────────────────
 
-  const scoreData = fileQuizHistory
-    .slice()
-    .reverse()
-    .map((quiz, index) => ({
-      attempt: `#${index + 1}`,
-      score: quiz.score,
-      total: quiz.totalQuestions,
-      percentage: Math.round((quiz.score / quiz.totalQuestions) * 100),
-      points: quiz.points || 0,
-    }))
-
-  if (loading || loadingFile) return <div className="flex items-center justify-center h-screen">Loading...</div>
-  if (error) return <div className="flex items-center justify-center h-screen text-red-500">{error}</div>
-  if (!file) return <div className="flex items-center justify-center h-screen">File not found</div>
+  if (loading || loadingFile) {
+    return (
+      <div style={{ display: "flex", height: "100vh", background: "#07071a", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: 14 }}>
+        Loading…
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <div style={{ display: "flex", height: "100vh", background: "#07071a", alignItems: "center", justifyContent: "center", color: "#FF6B6B", fontSize: 14 }}>
+        {error}
+      </div>
+    )
+  }
+  if (!file) {
+    return (
+      <div style={{ display: "flex", height: "100vh", background: "#07071a", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: 14 }}>
+        File not found
+      </div>
+    )
+  }
 
   return (
-    <div className="md:flex h-screen bg-white">
-      <MobileHeaderNav />
-      <Sidebar />
-      <main className="flex-1 overflow-auto pt-16 md:pt-0">
-        <DashboardHeader showSearch={false} />
-        <div className="p-4 md:p-8">
-          <div className="mb-6 md:mb-8">
+    <>
+      <style>{STYLES}</style>
+
+      <div
+        className="fpc-wrap"
+        style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#07071a", color: "#fff", position: "relative" }}
+      >
+        {/* Ambient blobs */}
+        <div className="fpc-blob" style={{ width: 320, height: 320, background: "rgba(91,110,232,0.09)", top: -60, left: 220, animationDuration: "9s" }} />
+        <div className="fpc-blob" style={{ width: 240, height: 240, background: "rgba(123,94,167,0.06)", bottom: 60, right: 60, animationDuration: "13s", animationDelay: "4s" }} />
+
+        <MobileHeaderNav />
+        <Sidebar />
+
+        <main
+          style={{ flex: 1, overflowY: "auto", position: "relative", zIndex: 1 }}
+          className="pt-14 md:pt-0"
+        >
+          {/* ── Top bar ── */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "16px 28px",
+              borderBottom: "1px solid rgba(255,255,255,0.05)",
+              background: "rgba(7,7,26,0.85)",
+              backdropFilter: "blur(12px)",
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+            }}
+          >
             <Link
               href="/file-library"
-              className="text-[#5B6EE8] hover:underline mb-4 inline-block text-sm md:text-base"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.5)",
+                textDecoration: "none",
+                transition: "color .2s",
+              }}
             >
-              ← Back to File Library
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              File Library
             </Link>
 
-            <div className="flex flex-col sm:flex-row items-start gap-4 md:gap-6 mb-6 md:mb-8">
-              <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-yellow-300 to-yellow-400 rounded-2xl flex items-center justify-center text-5xl md:text-7xl flex-shrink-0">
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg,#51CF66,#37b24d)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 800,
+                fontSize: 14,
+                color: "#fff",
+              }}
+            >
+              M
+            </div>
+          </div>
+
+          <div style={{ padding: "28px" }}>
+
+            {/* ── File hero ── */}
+            <div
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 20,
+                padding: "24px 28px",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 20,
+                marginBottom: 24,
+                flexWrap: "wrap",
+              }}
+            >
+              <div
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 18,
+                  background: "linear-gradient(135deg,#FFD43B,#FFA94D)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 36,
+                  flexShrink: 0,
+                }}
+              >
                 📁
               </div>
-
-              <div>
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h1
+                  style={{
+                    fontFamily: "'Syne', sans-serif",
+                    fontSize: "clamp(18px, 3vw, 26px)",
+                    fontWeight: 800,
+                    color: "#fff",
+                    margin: "0 0 8px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {file.displayName || file.fileName}
                 </h1>
-                <p className="text-sm md:text-base text-gray-600 mb-1">
-                  <strong>File Size:</strong> {formatFileSize(file.fileSize)}
-                </p>
-                <p className="text-sm md:text-base text-gray-600 mb-1">
-                  <strong>Uploaded:</strong> {new Date(file.uploadedAt).toLocaleDateString()}
-                </p>
-                <p className="text-sm md:text-base text-gray-600">
-                  <strong>File Type:</strong> {file.fileType || "Unknown"}
-                </p>
+                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                  {[
+                    { label: "Size",     value: formatFileSize(file.fileSize) },
+                    { label: "Uploaded", value: new Date(file.uploadedAt).toLocaleDateString() },
+                    { label: "Type",     value: file.fileType || "Unknown" },
+                  ].map((m) => (
+                    <div key={m.label} style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>
+                      <span style={{ color: "rgba(255,255,255,0.2)" }}>{m.label}: </span>
+                      {m.value}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          {fileObjectUrl && (
-            <div className="mb-8 md:mb-12 bg-gray-50 rounded-xl p-4 md:p-6">
-              <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">File Preview</h2>
-              {file.fileType === "application/pdf" ? (
-                <iframe
-                  src={fileObjectUrl}
-                  className="w-full h-64 sm:h-80 md:h-96 rounded-lg border border-gray-300"
-                  title="PDF Preview"
-                />
-              ) : file.fileType === "text/plain" ? (
-                <div className="bg-white p-4 rounded-lg border border-gray-300 overflow-auto max-h-64 md:max-h-96 text-xs md:text-sm whitespace-pre-wrap break-words font-mono">
-                  <TextFileViewer fileObjectUrl={fileObjectUrl} />
+            {/* ── Action buttons ── */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                gap: 12,
+                marginBottom: 28,
+              }}
+            >
+              {/* Start Quiz */}
+              <button
+                className="fpc-action-btn"
+                onClick={handleStartQuiz}
+                disabled={generatingQuiz}
+                style={{
+                  padding: "18px 16px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(91,110,232,0.3)",
+                  background: "rgba(91,110,232,0.12)",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <span style={{ fontSize: 28 }}>{generatingQuiz ? "⏳" : "🎮"}</span>
+                {generatingQuiz ? "Preparing…" : "Start Quiz"}
+              </button>
+
+              {/* Study with AI */}
+              <button
+                className="fpc-action-btn"
+                disabled
+                style={{
+                  padding: "18px 16px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(155,94,167,0.2)",
+                  background: "rgba(123,94,167,0.08)",
+                  color: "rgba(255,255,255,0.4)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <span style={{ fontSize: 28 }}>🤖</span>
+                <span>Study with AI</span>
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: "#FFD43B",
+                    background: "rgba(255,212,59,0.1)",
+                    border: "1px solid rgba(255,212,59,0.2)",
+                    borderRadius: 100,
+                    padding: "2px 8px",
+                    letterSpacing: "0.6px",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Soon
+                </span>
+              </button>
+
+              {/* Delete */}
+              <button
+                className="fpc-action-btn"
+                onClick={handleDelete}
+                disabled={deleting}
+                style={{
+                  padding: "18px 16px",
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,107,107,0.2)",
+                  background: "rgba(255,107,107,0.08)",
+                  color: "rgba(255,255,255,0.6)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <span style={{ fontSize: 28 }}>🗑️</span>
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+
+            {/* ── File preview ── */}
+            {fileObjectUrl && (
+              <div
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 16,
+                  padding: "20px 22px",
+                  marginBottom: 28,
+                }}
+              >
+                <h2
+                  style={{
+                    fontFamily: "'Syne', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "rgba(255,255,255,0.6)",
+                    margin: "0 0 14px",
+                    textTransform: "uppercase",
+                    letterSpacing: "1px",
+                  }}
+                >
+                  File Preview
+                </h2>
+
+                {file.fileType === "application/pdf" ? (
+                  <iframe
+                    src={fileObjectUrl}
+                    style={{ width: "100%", height: 360, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}
+                    title="PDF Preview"
+                  />
+                ) : file.fileType === "text/plain" ? (
+                  <div
+                    style={{
+                      background: "rgba(0,0,0,0.3)",
+                      borderRadius: 10,
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      padding: 16,
+                      overflowY: "auto",
+                      maxHeight: 300,
+                      fontSize: 12,
+                      color: "rgba(255,255,255,0.6)",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      fontFamily: "monospace",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    <TextFileViewer fileObjectUrl={fileObjectUrl} />
+                  </div>
+                ) : (
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", margin: 0 }}>
+                    Preview not available for this file type. Start a quiz to use this file.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* ── Previous quiz stats ── */}
+            <div>
+              <h2
+                style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontSize: 16,
+                  fontWeight: 800,
+                  color: "#fff",
+                  margin: "0 0 16px",
+                }}
+              >
+                Previous Quiz Stats
+              </h2>
+
+              {loadingStats ? (
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", padding: "24px 0" }}>
+                  Loading quiz history…
                 </div>
-              ) : file.fileType?.includes("wordprocessingml") || file.fileType === "application/msword" ? (
-                <div className="bg-white p-4 rounded-lg border border-gray-300 text-gray-600 text-sm md:text-base">
-                  <p>Word document preview not available. Click "Start Quiz" to generate a quiz from this file.</p>
+              ) : fileQuizHistory.length === 0 ? (
+                <div
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: 16,
+                    padding: "32px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>📊</div>
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", margin: 0 }}>
+                    No quiz attempts yet. Start a quiz to see your stats here!
+                  </p>
                 </div>
               ) : (
-                <div className="bg-white p-4 rounded-lg border border-gray-300 text-gray-600 text-sm md:text-base">
-                  <p>Preview not available for this file type.</p>
-                </div>
+                <>
+                  {/* Recent attempts */}
+                  <div style={{ marginBottom: 24 }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "rgba(255,255,255,0.3)",
+                        textTransform: "uppercase",
+                        letterSpacing: "1.2px",
+                        marginBottom: 12,
+                      }}
+                    >
+                      Recent Attempts
+                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                        gap: 12,
+                      }}
+                    >
+                      {fileQuizHistory.slice(0, 6).map((quiz) => (
+                        <QuizHistoryCard key={quiz.id} quiz={quiz} showFileName={false} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Charts */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                      gap: 16,
+                    }}
+                  >
+                    {/* Difficulty pie */}
+                    <div
+                      style={{
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: 16,
+                        padding: "20px",
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: 16 }}>
+                        Difficulty Distribution
+                      </div>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <Pie
+                            data={difficultyData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) =>
+                              `${name}: ${(percent * 100).toFixed(0)}%`
+                            }
+                            outerRadius={80}
+                            dataKey="value"
+                          >
+                            {difficultyData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Legend
+                            formatter={(value) => (
+                              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
+                                {value}
+                              </span>
+                            )}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Avg scores bar */}
+                    <div
+                      style={{
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: 16,
+                        padding: "20px",
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: 16 }}>
+                        Avg Score by Difficulty
+                      </div>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={averageScoresByDifficulty}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                          <XAxis dataKey="difficulty" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <YAxis domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <Bar dataKey="avgScore" name="Avg %" radius={[8, 8, 0, 0]}>
+                            {averageScoresByDifficulty.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
-            <button
-              onClick={handleStartQuiz}
-              disabled={generatingQuiz}
-              className="w-full bg-[#5B6EE8] hover:bg-[#4a5ad3] disabled:bg-[#3a4ab3] text-white font-bold py-4 md:py-6 px-6 md:px-8 rounded-xl transition transform hover:scale-105"
-            >
-              <div className="text-xl md:text-2xl mb-2">{generatingQuiz ? "⏳" : "🎮"}</div>
-              <span className="text-sm md:text-base">{generatingQuiz ? "Preparing..." : "Start Quiz"}</span>
-            </button>
-
-            <button
-              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 md:py-6 px-6 md:px-8 rounded-xl transition transform hover:scale-105"
-              disabled
-            >
-              <div className="text-xl md:text-2xl mb-2">🤖</div>
-              <span className="text-sm md:text-base">Study with Ai</span>
-              <p className="text-xs mt-1 opacity-75">(Coming Soon)</p>
-            </button>
-
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-bold py-4 md:py-6 px-6 md:px-8 rounded-xl transition transform hover:scale-105"
-            >
-              <div className="text-xl md:text-2xl mb-2">🗑️</div>
-              <span className="text-sm md:text-base">{deleting ? "Deleting..." : "Delete"}</span>
-            </button>
           </div>
+        </main>
+      </div>
 
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Previous Quiz Stats</h2>
-            {loadingStats ? (
-              <div className="bg-gray-100 rounded-xl p-6 md:p-8 text-center">
-                <p className="text-gray-600 text-sm md:text-base">Loading quiz history...</p>
-              </div>
-            ) : fileQuizHistory.length === 0 ? (
-              <div className="bg-gray-100 rounded-xl p-6 md:p-8 text-center">
-                <p className="text-gray-600 text-sm md:text-base">
-                  No quiz attempts yet for this file. Start a quiz to see your stats here!
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="mb-8">
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Recent Attempts (Last 6)</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {fileQuizHistory.slice(0, 6).map((quiz) => (
-                      <QuizHistoryCard key={quiz.id} quiz={quiz} showFileName={false} />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mt-8">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base md:text-lg">Difficulty Distribution</CardTitle>
-                      <CardDescription className="text-xs md:text-sm">
-                        Quiz attempts by difficulty level
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ChartContainer
-                        config={{
-                          easy: { label: "Easy", color: "#51CF66" },
-                          moderate: { label: "Moderate", color: "#FFD43B" },
-                          hard: { label: "Hard", color: "#FF6B6B" },
-                        }}
-                        className="h-[200px] sm:h-[250px] md:h-[300px]"
-                      >
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={difficultyData}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                            >
-                              {difficultyData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <ChartTooltip content={<ChartTooltipContent />} />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base md:text-lg">Average Scores by Difficulty</CardTitle>
-                      <CardDescription className="text-xs md:text-sm">
-                        Your average performance for each difficulty level
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ChartContainer
-                        config={{
-                          avgScore: { label: "Avg Score %", color: "#5B6EE8" },
-                        }}
-                        className="h-[200px] sm:h-[250px] md:h-[300px]"
-                      >
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={averageScoresByDifficulty}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="difficulty" />
-                            <YAxis domain={[0, 100]} />
-                            <ChartTooltip
-                              content={({ active, payload }) => {
-                                if (active && payload && payload.length) {
-                                  const data = payload[0].payload
-                                  return (
-                                    <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-                                      <p className="font-semibold">{data.difficulty}</p>
-                                      <p className="text-sm font-bold" style={{ color: data.color }}>
-                                        Average: {data.avgScore}%
-                                      </p>
-                                      <p className="text-sm text-gray-600">Attempts: {data.count}</p>
-                                    </div>
-                                  )
-                                }
-                                return null
-                              }}
-                            />
-                            <Legend />
-                            <Bar dataKey="avgScore" name="Avg Score %" radius={[8, 8, 0, 0]}>
-                              {averageScoresByDifficulty.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
-                    </CardContent>
-                  </Card>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        <QuizCustomizationModal
-          isOpen={showCustomizationModal}
-          onClose={() => setShowCustomizationModal(false)}
-          onConfirm={handleQuizCustomizationConfirm}
-          isLoading={generatingQuiz}
-        />
-      </main>
-    </div>
+      <QuizCustomizationModal
+        isOpen={showCustomizationModal}
+        onClose={() => setShowCustomizationModal(false)}
+        onConfirm={handleQuizCustomizationConfirm}
+        isLoading={generatingQuiz}
+      />
+    </>
   )
 }
 
+// ── Text file viewer — logic unchanged ────────────────────────────────────
 const TextFileViewer = ({ fileObjectUrl }: { fileObjectUrl: string }) => {
   const [content, setContent] = useState<string>("")
-
   useEffect(() => {
     const loadTextContent = async () => {
       try {
@@ -424,13 +624,10 @@ const TextFileViewer = ({ fileObjectUrl }: { fileObjectUrl: string }) => {
         const text = await response.text()
         setContent(text)
       } catch (error) {
-        console.error("Error loading text file:", error)
         setContent("Error loading file content")
       }
     }
-
     loadTextContent()
   }, [fileObjectUrl])
-
   return <>{content}</>
 }

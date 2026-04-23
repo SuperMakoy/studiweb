@@ -85,7 +85,7 @@ export default function DashboardPage() {
 
       <div className="studi-db" style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#07071a", color: "#fff", position: "relative" }}>
 
-        {/* Ambient blobs (no floating emoji icons) */}
+        {/* Ambient blobs */}
         <div className="studi-blob" style={{ width: 360, height: 360, background: "rgba(91,110,232,0.1)",  top: -60,  left: 220, animationDuration: "9s"  }} />
         <div className="studi-blob" style={{ width: 280, height: 280, background: "rgba(123,94,167,0.08)", bottom: 60, right: 60, animationDuration: "13s", animationDelay: "4s" }} />
 
@@ -102,7 +102,12 @@ export default function DashboardPage() {
                 <circle cx="6" cy="6" r="4.5" stroke="#fff" strokeWidth="1.3" />
                 <path d="M9.5 9.5l2.5 2.5" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
-              <input placeholder="Search file to quiz..." style={{ background: "none", border: "none", outline: "none", color: "#fff", fontSize: 13, fontFamily: "inherit", width: "100%" }} />
+              {/* suppressHydrationWarning prevents browser extension attribute injection (fdprocessedid) from causing hydration mismatch */}
+              <input
+                suppressHydrationWarning
+                placeholder="Search file to quiz..."
+                style={{ background: "none", border: "none", outline: "none", color: "#fff", fontSize: 13, fontFamily: "inherit", width: "100%" }}
+              />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>

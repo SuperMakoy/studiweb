@@ -2,7 +2,6 @@
 
 import { useEffect, useState, use } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import EvaluatorSidebar from "@/components/evaluator/evaluator-sidebar"
 import EvaluatorMobileHeader from "@/components/evaluator/evaluator-mobile-header"
@@ -13,75 +12,21 @@ import {
   type QuestionEvaluation,
   type RubricCriteria,
 } from "@/lib/evaluation-service"
-import { ArrowLeft, ArrowRight, Save, CheckCircle, Info } from "lucide-react"
 
 type CognitiveLevel = "Remember" | "Understand" | "Apply" | "Analyze" | "Evaluate" | "Create"
 
 const COGNITIVE_LEVELS: CognitiveLevel[] = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]
 
-const COGNITIVE_LEVEL_DESCRIPTIONS: Record<CognitiveLevel, string> = {
-  Remember: "Recall facts and basic concepts (Define, List, Name, State, Identify)",
-  Understand: "Explain ideas or concepts (Explain, Summarize, Describe, Interpret)",
-  Apply: "Use information in new situations (Apply, Demonstrate, Solve, Use)",
-  Analyze: "Draw connections among ideas (Compare, Contrast, Differentiate, Examine)",
-  Evaluate: "Justify a decision or judgment (Justify, Critique, Defend, Judge)",
-  Create: "Produce new or original work (Design, Propose, Construct, Combine)",
+const LEVEL_COLORS: Record<CognitiveLevel, string> = {
+  Remember: "#7f9fff", Understand: "#5dade2", Apply: "#58d68d",
+  Analyze: "#f8c471", Evaluate: "#eb984e", Create: "#f1948a",
 }
 
-// Rubric criteria definitions with descriptions for each score
 const RUBRIC_CRITERIA = [
-  {
-    key: "verbAlignment" as keyof RubricCriteria,
-    label: "Verb Alignment",
-    description: "Does the action verb in the question match the assigned cognitive level?",
-    tooltip: "Check if verbs like 'define', 'analyze', 'evaluate' match the taxonomy level",
-    scoreDescriptions: {
-      1: "Completely misaligned verb",
-      2: "Mostly misaligned",
-      3: "Partially aligned",
-      4: "Mostly aligned",
-      5: "Perfect verb alignment",
-    },
-  },
-  {
-    key: "cognitiveComplexity" as keyof RubricCriteria,
-    label: "Cognitive Complexity",
-    description: "Does the question require the expected level of cognitive processing?",
-    tooltip: "Higher levels require analysis, evaluation, or creation; lower levels require recall",
-    scoreDescriptions: {
-      1: "Wrong complexity level",
-      2: "Too simple/complex",
-      3: "Moderate match",
-      4: "Good match",
-      5: "Exact complexity match",
-    },
-  },
-  {
-    key: "questionClarity" as keyof RubricCriteria,
-    label: "Question Clarity",
-    description: "Is the question clearly written and unambiguous?",
-    tooltip: "Students should understand what is being asked without confusion",
-    scoreDescriptions: {
-      1: "Very confusing",
-      2: "Somewhat unclear",
-      3: "Adequate clarity",
-      4: "Clear",
-      5: "Crystal clear",
-    },
-  },
-  {
-    key: "topicRelevance" as keyof RubricCriteria,
-    label: "Topic Relevance",
-    description: "Is the question relevant to the source content/topic?",
-    tooltip: "The question should test knowledge from the actual learning material",
-    scoreDescriptions: {
-      1: "Not relevant",
-      2: "Barely relevant",
-      3: "Somewhat relevant",
-      4: "Relevant",
-      5: "Highly relevant",
-    },
-  },
+  { key: "verbAlignment" as keyof RubricCriteria, label: "Verb Alignment", description: "Does the action verb match the cognitive level?", scoreDescriptions: { 1: "Completely misaligned", 2: "Mostly misaligned", 3: "Partially aligned", 4: "Mostly aligned", 5: "Perfect alignment" } },
+  { key: "cognitiveComplexity" as keyof RubricCriteria, label: "Cognitive Complexity", description: "Does the question require the expected cognitive processing?", scoreDescriptions: { 1: "Wrong complexity", 2: "Too simple/complex", 3: "Moderate match", 4: "Good match", 5: "Exact match" } },
+  { key: "questionClarity" as keyof RubricCriteria, label: "Question Clarity", description: "Is the question clearly written and unambiguous?", scoreDescriptions: { 1: "Very confusing", 2: "Somewhat unclear", 3: "Adequate clarity", 4: "Clear", 5: "Crystal clear" } },
+  { key: "topicRelevance" as keyof RubricCriteria, label: "Topic Relevance", description: "Is the question relevant to the source content?", scoreDescriptions: { 1: "Not relevant", 2: "Barely relevant", 3: "Somewhat relevant", 4: "Relevant", 5: "Highly relevant" } },
 ]
 
 export default function EvaluatePage({ params }: { params: Promise<{ id: string }> }) {
@@ -97,11 +42,7 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     const isEvaluator = sessionStorage.getItem("isEvaluator")
-    if (!isEvaluator) {
-      router.push("/evaluator/login")
-      return
-    }
-
+    if (!isEvaluator) { router.push("/evaluator/login"); return }
     loadQuiz()
   }, [id, router])
 
@@ -111,389 +52,385 @@ export default function EvaluatePage({ params }: { params: Promise<{ id: string 
       const data = await getQuizForEvaluation(id)
       if (data) {
         setQuiz(data)
-        // Initialize evaluations for each question with default rubric scores
-        const initialEvaluations: Record<number, QuestionEvaluation> = {}
+        const init: Record<number, QuestionEvaluation> = {}
         data.questions.forEach((q, index) => {
-          initialEvaluations[index] = {
+          init[index] = {
             questionId: q.id,
-            rubricScores: {
-              verbAlignment: 3,
-              cognitiveComplexity: 3,
-              questionClarity: 3,
-              topicRelevance: 3,
-            },
+            rubricScores: { verbAlignment: 3, cognitiveComplexity: 3, questionClarity: 3, topicRelevance: 3 },
             alignmentScore: 3,
             suggestedLevel: q.cognitiveLevel || "Remember",
             notes: "",
           }
         })
-        setEvaluations(initialEvaluations)
+        setEvaluations(init)
       }
-    } catch (err) {
-      setError("Failed to load quiz")
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError("Failed to load quiz"); console.error(err) }
+    finally { setLoading(false) }
   }
 
   const handleRubricChange = (criterion: keyof RubricCriteria, score: number) => {
-    setEvaluations((prev) => {
-      const currentEval = prev[currentQuestionIndex]
-      const newRubricScores = {
-        ...currentEval.rubricScores,
-        [criterion]: score,
-      }
-      // Calculate overall alignment as average of rubric scores
-      const overallScore = Math.round(
-        (newRubricScores.verbAlignment +
-          newRubricScores.cognitiveComplexity +
-          newRubricScores.questionClarity +
-          newRubricScores.topicRelevance) / 4
-      )
-      return {
-        ...prev,
-        [currentQuestionIndex]: {
-          ...currentEval,
-          rubricScores: newRubricScores,
-          alignmentScore: overallScore,
-        },
-      }
+    setEvaluations(prev => {
+      const cur = prev[currentQuestionIndex]
+      const newScores = { ...cur.rubricScores, [criterion]: score }
+      const overall = Math.round((newScores.verbAlignment + newScores.cognitiveComplexity + newScores.questionClarity + newScores.topicRelevance) / 4)
+      return { ...prev, [currentQuestionIndex]: { ...cur, rubricScores: newScores, alignmentScore: overall } }
     })
   }
 
   const handleLevelChange = (level: CognitiveLevel) => {
-    setEvaluations((prev) => ({
-      ...prev,
-      [currentQuestionIndex]: {
-        ...prev[currentQuestionIndex],
-        suggestedLevel: level,
-      },
-    }))
+    setEvaluations(prev => ({ ...prev, [currentQuestionIndex]: { ...prev[currentQuestionIndex], suggestedLevel: level } }))
   }
 
   const handleNotesChange = (notes: string) => {
-    setEvaluations((prev) => ({
-      ...prev,
-      [currentQuestionIndex]: {
-        ...prev[currentQuestionIndex],
-        notes,
-      },
-    }))
+    setEvaluations(prev => ({ ...prev, [currentQuestionIndex]: { ...prev[currentQuestionIndex], notes } }))
   }
 
   const handleSave = async () => {
     if (!quiz) return
-
     try {
       setSaving(true)
       const evaluatorName = sessionStorage.getItem("evaluatorName") || "Unknown"
       await saveEvaluation(id, Object.values(evaluations), evaluatorName)
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-    } catch (err) {
-      setError("Failed to save evaluation")
-      console.error(err)
-    } finally {
-      setSaving(false)
-    }
+    } catch (err) { setError("Failed to save evaluation"); console.error(err) }
+    finally { setSaving(false) }
   }
 
-  const handleFinish = async () => {
-    await handleSave()
-    router.push("/evaluator/dashboard")
-  }
+  const handleFinish = async () => { await handleSave(); router.push("/evaluator/dashboard") }
 
-  if (loading) {
-    return (
-      <div className="md:flex h-screen bg-gray-50">
-        <EvaluatorMobileHeader />
-        <EvaluatorSidebar />
-        <div className="flex-1 flex items-center justify-center pt-14 md:pt-0">
-          <div className="text-gray-700 text-xl">Loading quiz...</div>
+  if (loading) return (
+    <div className="md:flex h-screen" style={{ background: "#07071a" }}>
+      <EvaluatorMobileHeader /><EvaluatorSidebar />
+      <div className="flex-1 flex items-center justify-center pt-14 md:pt-0">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style={{ animation: "spin 0.9s linear infinite" }}>
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            <circle cx="18" cy="18" r="15" stroke="rgba(91,110,232,0.2)" strokeWidth="2" />
+            <path d="M18 3A15 15 0 0133 18" stroke="#5B6EE8" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", fontFamily: "'DM Sans', sans-serif" }}>Loading quiz…</span>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 
-  if (!quiz) {
-    return (
-      <div className="md:flex h-screen bg-gray-50">
-        <EvaluatorMobileHeader />
-        <EvaluatorSidebar />
-        <div className="flex-1 flex items-center justify-center pt-14 md:pt-0">
-          <div className="text-center">
-            <p className="text-gray-700 text-xl mb-4">Quiz not found</p>
-            <Button onClick={() => router.push("/evaluator/dashboard")} className="bg-[#5B6EE8] hover:bg-[#4A5AC9] text-white">Back to Dashboard</Button>
-          </div>
+  if (!quiz) return (
+    <div className="md:flex h-screen" style={{ background: "#07071a" }}>
+      <EvaluatorMobileHeader /><EvaluatorSidebar />
+      <div className="flex-1 flex items-center justify-center pt-14 md:pt-0">
+        <div style={{ textAlign: "center", fontFamily: "'DM Sans', sans-serif" }}>
+          <p style={{ color: "rgba(255,255,255,0.5)", marginBottom: 16 }}>Quiz not found</p>
+          <button suppressHydrationWarning onClick={() => router.push("/evaluator/dashboard")} style={{ padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#fff", background: "linear-gradient(135deg,#5B6EE8,#7b5ea7)", border: "none", cursor: "pointer" }}>
+            Back to Dashboard
+          </button>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 
   const currentQuestion = quiz.questions[currentQuestionIndex]
-  const currentEvaluation = evaluations[currentQuestionIndex]
+  const currentEval = evaluations[currentQuestionIndex]
+  const isLast = currentQuestionIndex === quiz.questions.length - 1
+  const levelColor = currentQuestion.cognitiveLevel ? LEVEL_COLORS[currentQuestion.cognitiveLevel as CognitiveLevel] : "#7f9fff"
 
   return (
-    <div className="md:flex h-screen bg-gray-50">
-      <EvaluatorMobileHeader />
-      <EvaluatorSidebar />
-      
-      <div className="flex-1 flex flex-col overflow-hidden pt-14 md:pt-0">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-2 md:py-3 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
-          <div className="flex items-center gap-2 md:gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/evaluator/dashboard")}
-              className="text-gray-600 hover:text-gray-800 px-2 md:px-3"
-            >
-              <ArrowLeft className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Dashboard</span>
-            </Button>
-            <div className="h-6 w-px bg-gray-200 hidden md:block" />
-            <div>
-              <h1 className="font-semibold text-gray-900 text-sm md:text-base truncate max-w-[150px] md:max-w-none">{quiz.fileName}</h1>
-              <p className="text-xs md:text-sm text-gray-500 capitalize">{quiz.difficulty} difficulty</p>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+        .ev-ev * { box-sizing: border-box; }
+        .ev-ev { font-family: 'DM Sans', sans-serif; }
+        .ev-score-btn { transition: all .15s; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+        .ev-score-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .ev-level-btn { transition: all .15s; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+        .ev-level-btn:hover { opacity: 0.85; }
+        .ev-nav-btn { transition: all .2s; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+        .ev-nav-btn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
+        .ev-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+      `}</style>
+
+      <div className="ev-ev" style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#07071a", color: "#fff" }}>
+        <EvaluatorMobileHeader />
+        <EvaluatorSidebar />
+
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }} className="pt-14 md:pt-0">
+
+          {/* Header */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "10px 20px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(7,7,26,0.9)", backdropFilter: "blur(12px)",
+            position: "sticky", top: 0, zIndex: 10, gap: 12, flexWrap: "wrap",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button suppressHydrationWarning onClick={() => router.push("/evaluator/dashboard")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                Dashboard
+              </button>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#fff", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{quiz.fileName}</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", textTransform: "capitalize" }}>{quiz.difficulty} difficulty</div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Q {currentQuestionIndex + 1}/{quiz.questions.length}</span>
+              <button
+                suppressHydrationWarning
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "7px 14px", borderRadius: 8,
+                  background: saved ? "rgba(81,207,102,0.15)" : "rgba(255,255,255,0.06)",
+                  border: `1px solid ${saved ? "rgba(81,207,102,0.3)" : "rgba(255,255,255,0.1)"}`,
+                  color: saved ? "#51CF66" : "rgba(255,255,255,0.6)",
+                  cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit",
+                  transition: "all .2s",
+                }}
+              >
+                {saved ? (
+                  <><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" /><path d="M3.5 6l2 2 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>Saved</>
+                ) : saving ? "Saving…" : (
+                  <><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 10V6l4-4 4 4v4H7.5V8h-3v2H2z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></svg>Save</>
+                )}
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2 md:gap-3 justify-between md:justify-end">
-            <span className="text-xs md:text-sm text-gray-600">
-              Q {currentQuestionIndex + 1}/{quiz.questions.length}
-            </span>
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              variant="outline"
-              size="sm"
-              className="text-xs md:text-sm"
-            >
-              {saved ? (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-1 md:mr-2 text-emerald-600" />
-                  Saved
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-1 md:mr-2" />
-                  {saving ? "Saving..." : "Save"}
-                </>
-              )}
-            </Button>
-          </div>
-        </header>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 md:px-4 py-2 md:py-3 rounded-lg mb-4 md:mb-6 text-sm">
-              {error}
-            </div>
-          )}
+          {/* Main */}
+          <main style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+            {error && (
+              <div style={{ background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.25)", color: "#ff8f8f", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>
+            )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-            {/* Left Side - Quiz Question */}
-            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 h-fit">
-              <div className="mb-3 md:mb-4">
-                <span className="text-xs font-medium px-2 md:px-2.5 py-1 rounded-full bg-[#5B6EE8]/10 text-[#5B6EE8]">
-                  AI Assigned: {currentQuestion.cognitiveLevel || "Not specified"}
-                </span>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, maxWidth: 1100 }}>
+
+              {/* ── Left: Question ── */}
+              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "20px" }}>
+                {/* Level badge */}
+                <div style={{ marginBottom: 16 }}>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: "0.8px",
+                    textTransform: "uppercase",
+                    color: levelColor,
+                    background: `${levelColor}18`,
+                    border: `1px solid ${levelColor}30`,
+                    borderRadius: 100, padding: "3px 10px",
+                  }}>
+                    AI: {currentQuestion.cognitiveLevel || "Not specified"}
+                  </span>
+                </div>
+
+                {/* Question text */}
+                <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 700, color: "#fff", margin: "0 0 20px", lineHeight: 1.5 }}>
+                  {currentQuestion.question}
+                </h2>
+
+                {/* Options */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {currentQuestion.options.map((option, idx) => {
+                    const isCorrect = currentQuestion.correctAnswers.includes(idx)
+                    return (
+                      <div key={idx} style={{
+                        display: "flex", alignItems: "flex-start", gap: 12,
+                        padding: "11px 14px", borderRadius: 10,
+                        background: isCorrect ? "rgba(81,207,102,0.08)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${isCorrect ? "rgba(81,207,102,0.3)" : "rgba(255,255,255,0.07)"}`,
+                      }}>
+                        <div style={{
+                          width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                          background: isCorrect ? "#51CF66" : "rgba(255,255,255,0.08)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 10, fontWeight: 700,
+                          color: isCorrect ? "#fff" : "rgba(255,255,255,0.4)",
+                        }}>
+                          {String.fromCharCode(65 + idx)}
+                        </div>
+                        <span style={{ fontSize: 13, color: isCorrect ? "#a3f0b8" : "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>{option}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+                {currentQuestion.correctAnswers.length > 0 && (
+                  <p style={{ marginTop: 12, fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
+                    Correct: {currentQuestion.correctAnswers.map(i => String.fromCharCode(65 + i)).join(", ")}
+                  </p>
+                )}
               </div>
 
-              <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4 md:mb-6">{currentQuestion.question}</h2>
+              {/* ── Right: Rubric ── */}
+              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "20px", display: "flex", flexDirection: "column", gap: 16 }}>
 
-              <div className="space-y-2 md:space-y-3">
-                {currentQuestion.options.map((option, index) => {
-                  const isCorrect = currentQuestion.correctAnswers.includes(index)
-                  return (
-                    <div
-                      key={index}
-                      className={`p-3 md:p-4 rounded-lg border-2 ${
-                        isCorrect
-                          ? "border-emerald-500 bg-emerald-50"
-                          : "border-gray-200 bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-start gap-2 md:gap-3">
-                        <span
-                          className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-xs md:text-sm font-medium flex-shrink-0 ${
-                            isCorrect
-                              ? "bg-emerald-500 text-white"
-                              : "bg-gray-300 text-gray-700"
-                          }`}
-                        >
-                          {String.fromCharCode(65 + index)}
-                        </span>
-                        <span className={`text-sm md:text-base ${isCorrect ? "text-emerald-900 font-medium" : "text-gray-700"}`}>
-                          {option}
-                        </span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>Evaluation Rubric</h3>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Rate 1–5</span>
+                </div>
+
+                {/* 4 rubric criteria */}
+                {RUBRIC_CRITERIA.map(criterion => (
+                  <div key={criterion.key} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{criterion.label}</div>
+                        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{criterion.description}</div>
                       </div>
+                      <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 800, color: "#5B6EE8" }}>
+                        {currentEval?.rubricScores?.[criterion.key] || 3}
+                      </span>
                     </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {[1,2,3,4,5].map(score => {
+                        const active = currentEval?.rubricScores?.[criterion.key] === score
+                        return (
+                          <button
+                            key={score}
+                            suppressHydrationWarning
+                            className="ev-score-btn"
+                            onClick={() => handleRubricChange(criterion.key, score)}
+                            style={{
+                              flex: 1, padding: "8px 4px", borderRadius: 8,
+                              fontSize: 13, fontWeight: 600,
+                              border: active ? "1px solid rgba(91,110,232,0.5)" : "1px solid rgba(255,255,255,0.1)",
+                              background: active ? "rgba(91,110,232,0.2)" : "rgba(255,255,255,0.04)",
+                              color: active ? "#9baeff" : "rgba(255,255,255,0.45)",
+                            }}
+                          >
+                            {score}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <p style={{ marginTop: 6, fontSize: 10, color: "rgba(255,255,255,0.25)", textAlign: "center" }}>
+                      {criterion.scoreDescriptions[currentEval?.rubricScores?.[criterion.key] as 1|2|3|4|5 || 3]}
+                    </p>
+                  </div>
+                ))}
+
+                {/* Overall score */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(91,110,232,0.1)", border: "1px solid rgba(91,110,232,0.2)", borderRadius: 12, padding: "14px 18px" }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#9baeff" }}>Overall Alignment</div>
+                    <div style={{ fontSize: 11, color: "rgba(155,174,255,0.5)", marginTop: 2 }}>Average of all criteria</div>
+                  </div>
+                  <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 28, fontWeight: 800, color: "#5B6EE8" }}>
+                    {currentEval?.alignmentScore || 3}/5
+                  </span>
+                </div>
+
+                {/* Suggested level */}
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.8px" }}>Your Suggested Level</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                    {COGNITIVE_LEVELS.map(level => {
+                      const active = currentEval?.suggestedLevel === level
+                      const c = LEVEL_COLORS[level]
+                      return (
+                        <button
+                          key={level}
+                          suppressHydrationWarning
+                          className="ev-level-btn"
+                          onClick={() => handleLevelChange(level)}
+                          style={{
+                            padding: "7px 4px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                            border: active ? `1px solid ${c}50` : "1px solid rgba(255,255,255,0.08)",
+                            background: active ? `${c}18` : "rgba(255,255,255,0.03)",
+                            color: active ? c : "rgba(255,255,255,0.45)",
+                          }}
+                        >
+                          {level}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.8px" }}>Evaluator Notes</div>
+                  <textarea
+                    value={currentEval?.notes || ""}
+                    onChange={e => handleNotesChange(e.target.value)}
+                    placeholder="Add comments, suggestions, or observations…"
+                    rows={3}
+                    style={{
+                      width: "100%", resize: "none",
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 10, padding: "10px 12px",
+                      color: "#fff", fontSize: 13,
+                      fontFamily: "'DM Sans', sans-serif",
+                      outline: "none", lineHeight: 1.6,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 20, gap: 12 }}>
+              <button
+                suppressHydrationWarning
+                className="ev-nav-btn"
+                onClick={() => setCurrentQuestionIndex(p => p - 1)}
+                disabled={currentQuestionIndex === 0}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                Previous
+              </button>
+
+              {/* Dots */}
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "center", maxWidth: 300 }}>
+                {quiz.questions.map((_, idx) => {
+                  const hasEval = evaluations[idx]?.notes || evaluations[idx]?.alignmentScore !== 3 || evaluations[idx]?.suggestedLevel !== quiz.questions[idx].cognitiveLevel
+                  return (
+                    <button
+                      key={idx}
+                      suppressHydrationWarning
+                      onClick={() => setCurrentQuestionIndex(idx)}
+                      style={{
+                        width: 28, height: 28, borderRadius: "50%",
+                        fontSize: 11, fontWeight: 600, cursor: "pointer",
+                        border: "none",
+                        background: idx === currentQuestionIndex ? "#5B6EE8" : hasEval ? "rgba(81,207,102,0.2)" : "rgba(255,255,255,0.08)",
+                        color: idx === currentQuestionIndex ? "#fff" : hasEval ? "#51CF66" : "rgba(255,255,255,0.4)",
+                        fontFamily: "inherit",
+                        transition: "all .15s",
+                      }}
+                    >
+                      {idx + 1}
+                    </button>
                   )
                 })}
               </div>
 
-              {currentQuestion.correctAnswers.length > 0 && (
-                <p className="mt-3 md:mt-4 text-xs md:text-sm text-gray-500">
-                  Correct answer: {currentQuestion.correctAnswers.map((i) => String.fromCharCode(65 + i)).join(", ")}
-                </p>
+              {isLast ? (
+                <button
+                  suppressHydrationWarning
+                  className="ev-nav-btn"
+                  onClick={handleFinish}
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#fff", background: "linear-gradient(135deg,#51CF66,#37b24d)", border: "none", boxShadow: "0 4px 14px rgba(81,207,102,0.3)" }}
+                >
+                  Finish & Save
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" /><path d="M3.5 6l2 2 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+              ) : (
+                <button
+                  suppressHydrationWarning
+                  className="ev-nav-btn"
+                  onClick={() => setCurrentQuestionIndex(p => p + 1)}
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#fff", background: "linear-gradient(135deg,#5B6EE8,#7b5ea7)", border: "none", boxShadow: "0 4px 14px rgba(91,110,232,0.3)" }}
+                >
+                  Next
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
               )}
             </div>
-
-            {/* Right Side - Evaluation Form with 4-Criteria Rubric */}
-            <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200">
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <h3 className="text-base md:text-lg font-semibold text-gray-900">Evaluation Rubric</h3>
-                <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm text-gray-500">
-                  <Info className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                  <span className="hidden sm:inline">Rate each criterion 1-5</span>
-                  <span className="sm:hidden">1-5</span>
-                </div>
-              </div>
-
-              {/* 4-Criteria Rubric */}
-              <div className="space-y-4 md:space-y-6 mb-4 md:mb-6">
-                {RUBRIC_CRITERIA.map((criterion) => (
-                  <div key={criterion.key} className="bg-gray-50 rounded-lg p-3 md:p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <h4 className="font-medium text-gray-900 text-sm md:text-base">{criterion.label}</h4>
-                        <p className="text-xs text-gray-500 hidden sm:block">{criterion.description}</p>
-                      </div>
-                      <span className="text-base md:text-lg font-bold text-[#5B6EE8]">
-                        {currentEvaluation?.rubricScores?.[criterion.key] || 3}
-                      </span>
-                    </div>
-                    <div className="flex gap-1 md:gap-1.5 mt-2 md:mt-3">
-                      {[1, 2, 3, 4, 5].map((score) => (
-                        <button
-                          key={score}
-                          onClick={() => handleRubricChange(criterion.key, score)}
-                          title={criterion.scoreDescriptions[score as 1|2|3|4|5]}
-                          className={`flex-1 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
-                            currentEvaluation?.rubricScores?.[criterion.key] === score
-                              ? "bg-[#5B6EE8] text-white shadow-sm"
-                              : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                          }`}
-                        >
-                          {score}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2 text-center hidden sm:block">
-                      {criterion.scoreDescriptions[currentEvaluation?.rubricScores?.[criterion.key] as 1|2|3|4|5 || 3]}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Overall Score Display */}
-              <div className="bg-[#5B6EE8]/10 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-[#5B6EE8] text-sm md:text-base">Overall Alignment Score</h4>
-                    <p className="text-xs text-[#5B6EE8]/70">Average of all criteria</p>
-                  </div>
-                  <div className="text-2xl md:text-3xl font-bold text-[#5B6EE8]">
-                    {currentEvaluation?.alignmentScore || 3}/5
-                  </div>
-                </div>
-              </div>
-
-              {/* Suggested Level */}
-              <div className="mb-4 md:mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Suggested Cognitive Level
-                </label>
-                <p className="text-xs text-gray-500 mb-2 md:mb-3 hidden sm:block">
-                  What level do you think this question actually tests?
-                </p>
-                <div className="grid grid-cols-3 gap-1.5 md:gap-2">
-                  {COGNITIVE_LEVELS.map((level) => (
-                    <button
-                      key={level}
-                      onClick={() => handleLevelChange(level)}
-                      className={`px-2 md:px-3 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
-                        currentEvaluation?.suggestedLevel === level
-                          ? "bg-[#5B6EE8] text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {level}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Evaluator Notes</label>
-                <Textarea
-                  value={currentEvaluation?.notes || ""}
-                  onChange={(e) => handleNotesChange(e.target.value)}
-                  placeholder="Add comments, suggestions, or observations about this question..."
-                  rows={3}
-                  className="w-full resize-none text-sm"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-between mt-4 md:mt-6 gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
-              disabled={currentQuestionIndex === 0}
-              className="text-xs md:text-sm px-2 md:px-4"
-            >
-              <ArrowLeft className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Previous</span>
-            </Button>
-
-            <div className="flex gap-1 md:gap-1.5 flex-wrap justify-center max-w-[180px] md:max-w-md overflow-hidden">
-              {quiz.questions.map((_, index) => {
-                const hasEvaluation = evaluations[index]?.notes || 
-                  evaluations[index]?.alignmentScore !== 3 ||
-                  evaluations[index]?.suggestedLevel !== quiz.questions[index].cognitiveLevel
-                return (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentQuestionIndex(index)}
-                    className={`w-6 h-6 md:w-8 md:h-8 rounded-full text-xs md:text-sm font-medium transition-all ${
-                      index === currentQuestionIndex
-                        ? "bg-[#5B6EE8] text-white"
-                        : hasEvaluation
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                )
-              })}
-            </div>
-
-            {currentQuestionIndex === quiz.questions.length - 1 ? (
-              <Button onClick={handleFinish} className="bg-emerald-600 hover:bg-emerald-700 text-xs md:text-sm px-2 md:px-4">
-                <span className="hidden md:inline">Finish & Save</span>
-                <span className="md:hidden">Done</span>
-                <CheckCircle className="w-4 h-4 md:ml-2" />
-              </Button>
-            ) : (
-              <Button
-                onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
-                disabled={currentQuestionIndex === quiz.questions.length - 1}
-                className="bg-[#5B6EE8] hover:bg-[#4A5AC9] text-xs md:text-sm px-2 md:px-4"
-              >
-                <span className="hidden md:inline">Next</span>
-                <ArrowRight className="w-4 h-4 md:ml-2" />
-              </Button>
-            )}
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { getQuizzesForEvaluation, type QuizForEvaluation } from "@/lib/evaluation-service"
 import EvaluatorSidebar from "@/components/evaluator/evaluator-sidebar"
 import EvaluatorMobileHeader from "@/components/evaluator/evaluator-mobile-header"
-import { FileText, Clock, Loader2, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react"
 
 export default function AllQuizzesPage() {
   const router = useRouter()
   const [quizzes, setQuizzes] = useState<QuizForEvaluation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
 
   useEffect(() => {
     const isEvaluator = sessionStorage.getItem("isEvaluator")
@@ -36,150 +35,273 @@ export default function AllQuizzesPage() {
     }
   }
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
+  const formatDate = (timestamp: number) =>
+    new Date(timestamp).toLocaleDateString("en-US", {
+      month: "short", day: "numeric", year: "numeric",
     })
+
+  const DIFF_CONFIG: Record<string, { color: string; bg: string; border: string }> = {
+    easy:     { color: "#51CF66", bg: "rgba(81,207,102,0.12)",  border: "rgba(81,207,102,0.25)"  },
+    moderate: { color: "#FFD43B", bg: "rgba(255,212,59,0.12)",  border: "rgba(255,212,59,0.25)"  },
+    hard:     { color: "#FF6B6B", bg: "rgba(255,107,107,0.12)", border: "rgba(255,107,107,0.25)" },
   }
 
-  const getDifficultyStyles = (difficulty: string) => {
-    switch (difficulty) {
-      case "easy":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200"
-      case "moderate":
-        return "bg-amber-50 text-amber-700 border-amber-200"
-      case "hard":
-        return "bg-rose-50 text-rose-700 border-rose-200"
-      default:
-        return "bg-gray-50 text-gray-700 border-gray-200"
-    }
-  }
+  const filtered = search.trim()
+    ? quizzes.filter(q => q.fileName.toLowerCase().includes(search.toLowerCase()))
+    : quizzes
 
-  if (loading) {
-    return (
-      <div className="md:flex h-screen bg-gray-50">
-        <EvaluatorMobileHeader />
-        <EvaluatorSidebar />
-        <div className="flex-1 flex items-center justify-center pt-14 md:pt-0">
-          <Loader2 className="w-8 h-8 animate-spin text-[#5B6EE8]" />
-        </div>
-      </div>
-    )
-  }
+  const pendingCount = quizzes.filter(q => q.evaluationStatus === "pending").length
+  const doneCount = quizzes.filter(q => q.evaluationStatus === "evaluated").length
 
   return (
-    <div className="md:flex h-screen bg-gray-50">
-      <EvaluatorMobileHeader />
-      <EvaluatorSidebar />
-      
-      <div className="flex-1 flex flex-col overflow-hidden pt-14 md:pt-0">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg md:text-2xl font-semibold text-gray-900">All Quizzes</h1>
-              <p className="text-gray-500 text-xs md:text-sm mt-0.5">
-                View and manage all generated quizzes
-              </p>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+        .ev-all * { box-sizing: border-box; }
+        .ev-all { font-family: 'DM Sans', sans-serif; }
+
+        @keyframes evBlob { 0%,100%{transform:scale(1)}50%{transform:scale(1.07)} }
+        .ev-blob { animation: evBlob ease-in-out infinite; position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+
+        @keyframes evFadeUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .ev-grid-item { animation: evFadeUp .3s ease forwards; opacity: 0; }
+        .ev-grid-item:nth-child(1) { animation-delay: .04s; }
+        .ev-grid-item:nth-child(2) { animation-delay: .08s; }
+        .ev-grid-item:nth-child(3) { animation-delay: .12s; }
+        .ev-grid-item:nth-child(4) { animation-delay: .16s; }
+        .ev-grid-item:nth-child(5) { animation-delay: .20s; }
+        .ev-grid-item:nth-child(6) { animation-delay: .24s; }
+        .ev-grid-item:nth-child(n+7) { animation-delay: .28s; }
+
+        .ev-card {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: 18px;
+          cursor: pointer;
+          transition: all .2s;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          position: relative;
+          overflow: hidden;
+        }
+        .ev-card:hover {
+          border-color: rgba(91,110,232,0.3);
+          background: rgba(91,110,232,0.06);
+          transform: translateY(-3px);
+          box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+        }
+
+        .ev-search {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.09);
+          border-radius: 8px;
+          padding: 6px 12px 6px 32px;
+          color: #fff; font-size: 13px;
+          font-family: 'DM Sans', sans-serif;
+          outline: none; width: 200px;
+          transition: all .2s;
+        }
+        .ev-search::placeholder { color: rgba(255,255,255,0.25); }
+        .ev-search:focus { border-color: rgba(91,110,232,0.5); background: rgba(91,110,232,0.07); width: 240px; }
+      `}</style>
+
+      <div
+        className="ev-all"
+        style={{
+          display: "flex", height: "100vh", overflow: "hidden",
+          background: "#07071a", color: "#fff", position: "relative",
+        }}
+      >
+        <div className="ev-blob" style={{ width: 300, height: 300, background: "rgba(91,110,232,0.09)", top: -60, left: 220, animationDuration: "11s" }} />
+        <div className="ev-blob" style={{ width: 220, height: 220, background: "rgba(123,94,167,0.07)", bottom: 40, right: 60, animationDuration: "15s", animationDelay: "5s" }} />
+
+        <EvaluatorMobileHeader />
+        <EvaluatorSidebar />
+
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 1 }} className="pt-14 md:pt-0">
+
+          {/* ── Top bar ── */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "10px 20px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(7,7,26,0.9)", backdropFilter: "blur(12px)",
+            position: "sticky", top: 0, zIndex: 10, flexWrap: "wrap", gap: 10,
+          }}>
+            {/* Breadcrumb */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.4)", flex: 1 }}>
+              <span style={{ color: "rgba(255,255,255,0.25)" }}>Evaluator</span>
+              <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
+              <span style={{
+                fontWeight: 600, color: "#fff",
+                background: "rgba(91,110,232,0.15)",
+                border: "1px solid rgba(91,110,232,0.2)",
+                borderRadius: 6, padding: "2px 10px", fontSize: 12,
+              }}>
+                All Quizzes
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-[#5B6EE8]/10 rounded-xl flex items-center justify-center">
-                <FileText className="w-5 h-5 md:w-6 md:h-6 text-[#5B6EE8]" />
+
+            {/* Search */}
+            <div style={{ position: "relative" }}>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: 0.35 }}>
+                <circle cx="5.5" cy="5.5" r="4" stroke="#fff" strokeWidth="1.2" />
+                <path d="M9 9l2.5 2.5" stroke="#fff" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              <input
+                suppressHydrationWarning
+                className="ev-search"
+                placeholder="Search quizzes…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+
+            {/* Stats pills */}
+            <div style={{ display: "flex", gap: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#FFD43B", background: "rgba(255,212,59,0.1)", border: "1px solid rgba(255,212,59,0.2)", borderRadius: 100, padding: "4px 10px" }}>
+                ● {pendingCount} pending
               </div>
-              <div className="text-right">
-                <p className="text-xl md:text-2xl font-bold text-gray-900">{quizzes.length}</p>
-                <p className="text-gray-500 text-xs">Total</p>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#51CF66", background: "rgba(81,207,102,0.1)", border: "1px solid rgba(81,207,102,0.2)", borderRadius: 100, padding: "4px 10px" }}>
+                ● {doneCount} done
               </div>
             </div>
           </div>
-        </header>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto p-4 md:p-8">
-          {error && (
-            <div className="mb-4 p-3 md:p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
+          {/* ── Content ── */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
 
-          {quizzes.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-200 p-8 md:p-12 text-center">
-              <FileText className="w-12 h-12 md:w-16 md:h-16 mx-auto text-gray-300 mb-4" />
-              <h3 className="text-base md:text-lg font-medium text-gray-900">No quizzes yet</h3>
-              <p className="text-gray-500 text-sm mt-2">
-                Generate a quiz from the dashboard to get started
-              </p>
-              <Button
-                onClick={() => router.push("/evaluator/dashboard")}
-                className="mt-4 bg-[#5B6EE8] hover:bg-[#4A5AC9] text-white"
-              >
-                Go to Dashboard
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-              {quizzes.map((quiz) => (
-                <div
-                  key={quiz.id}
-                  onClick={() => router.push(
-                    quiz.evaluationStatus === "evaluated" 
-                      ? `/evaluator/view/${quiz.id}` 
-                      : `/evaluator/evaluate/${quiz.id}`
-                  )}
-                  className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:border-[#5B6EE8]/30 transition-all cursor-pointer group"
-                >
-                  {/* Top Row - Status & Difficulty */}
-                  <div className="flex items-center justify-between mb-3">
-                    {quiz.evaluationStatus === "evaluated" ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Evaluated
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full bg-amber-100 text-amber-700 font-medium">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        Pending
-                      </span>
-                    )}
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize border ${getDifficultyStyles(quiz.difficulty)}`}>
-                      {quiz.difficulty}
-                    </span>
+            {error && (
+              <div style={{ background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.25)", color: "#ff8f8f", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 20 }}>
+                {error}
+              </div>
+            )}
+
+            {loading ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 14 }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: 18, height: 160 }}>
+                    <div style={{ height: 8, width: 60, background: "rgba(255,255,255,0.06)", borderRadius: 100, marginBottom: 14 }} />
+                    <div style={{ height: 12, background: "rgba(255,255,255,0.07)", borderRadius: 100, marginBottom: 8, width: "85%" }} />
+                    <div style={{ height: 10, background: "rgba(255,255,255,0.05)", borderRadius: 100, width: "55%" }} />
                   </div>
+                ))}
+              </div>
 
-                  {/* Quiz Name */}
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#5B6EE8] transition-colors">
-                    {quiz.fileName}
-                  </h3>
-
-                  {/* Question Count */}
-                  <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-4">
-                    <FileText className="w-4 h-4" />
-                    <span>{quiz.questionCount} questions</span>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                      <Clock className="w-3.5 h-3.5" />
-                      {formatDate(quiz.createdAt)}
-                    </span>
-                    <span className={`inline-flex items-center gap-1 text-xs font-medium ${
-                      quiz.evaluationStatus === "evaluated" 
-                        ? "text-emerald-600" 
-                        : "text-[#5B6EE8]"
-                    }`}>
-                      {quiz.evaluationStatus === "evaluated" ? "View Results" : "Evaluate"}
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </span>
-                  </div>
+            ) : filtered.length === 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 320, gap: 12 }}>
+                <div style={{ fontSize: 40, opacity: 0.3 }}>🗂</div>
+                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.3)" }}>
+                  {search ? `No quizzes matching "${search}"` : "No quizzes yet"}
                 </div>
-              ))}
+                {!search && (
+                  <button
+                    suppressHydrationWarning
+                    onClick={() => router.push("/evaluator/dashboard")}
+                    style={{
+                      padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+                      color: "#fff", background: "linear-gradient(135deg,#5B6EE8,#7b5ea7)",
+                      border: "none", cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    Go to Dashboard
+                  </button>
+                )}
+              </div>
+
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 14 }}>
+                {filtered.map((quiz) => {
+                  const diff = DIFF_CONFIG[quiz.difficulty] ?? DIFF_CONFIG.moderate
+                  const isPending = quiz.evaluationStatus === "pending"
+                  const dest = isPending ? `/evaluator/evaluate/${quiz.id}` : `/evaluator/view/${quiz.id}`
+                  const statusColor = isPending ? "#FFD43B" : "#51CF66"
+
+                  return (
+                    <div
+                      key={quiz.id}
+                      className="ev-card ev-grid-item"
+                      onClick={() => router.push(dest)}
+                      style={{ borderTop: `2px solid ${statusColor}20` }}
+                    >
+                      {/* Status + difficulty */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <div style={{ width: 7, height: 7, borderRadius: "50%", background: statusColor }} />
+                          <span style={{ fontSize: 10, fontWeight: 700, color: statusColor, letterSpacing: "0.6px", textTransform: "uppercase" }}>
+                            {isPending ? "Pending" : "Evaluated"}
+                          </span>
+                        </div>
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, textTransform: "capitalize",
+                          color: diff.color, background: diff.bg, border: `1px solid ${diff.border}`,
+                          borderRadius: 100, padding: "2px 8px",
+                        }}>
+                          {quiz.difficulty}
+                        </span>
+                      </div>
+
+                      {/* Name */}
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {quiz.fileName}
+                      </div>
+
+                      {/* Meta */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                            <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.2" />
+                            <path d="M3 5h6M3 7.5h4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+                          </svg>
+                          {quiz.questionCount}Q
+                        </span>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2" />
+                            <path d="M6 3.5v3l2 1.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+                          </svg>
+                          {formatDate(quiz.createdAt)}
+                        </span>
+                      </div>
+
+                      {/* CTA */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Click to open</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: statusColor }}>
+                          {isPending ? "Evaluate" : "View Results"}
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Status bar */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "6px 20px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(7,7,26,0.9)",
+            fontSize: 11, color: "rgba(255,255,255,0.3)",
+          }}>
+            <span>{loading ? "Loading…" : `${filtered.length} item${filtered.length !== 1 ? "s" : ""}`}</span>
+            <div style={{ display: "flex", gap: 16 }}>
+              <span style={{ color: "#FFD43B" }}>● {pendingCount} pending</span>
+              <span style={{ color: "#51CF66" }}>● {doneCount} evaluated</span>
             </div>
-          )}
-        </main>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

@@ -19,7 +19,9 @@ Return ONLY valid JSON in this format:
       "question": "Question text here?",
       "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
       "correctAnswers": [0],
-      "type": "single"
+      "type": "single",
+      "cognitiveLevel": "Remember",
+      "explanation": "This is correct because..."
     }
   ]
 }
@@ -28,7 +30,10 @@ Rules:
 - Each question should have 4 options
 - correctAnswers array contains the index(es) of correct options (0-3)
 - type should be "single" for one correct answer, "multiple" for multiple correct answers
+- cognitiveLevel MUST be one of: "Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"
+- explanation should be a brief, clear reason why the correct answer(s) is correct (2-3 sentences max)
 - Create questions that test understanding, not just recall
+- Distribute cognitive levels across multiple questions (avoid using only one level)
 - Return ONLY valid JSON, no other text`
 
     const { text } = await generateText({

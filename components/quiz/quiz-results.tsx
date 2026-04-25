@@ -60,6 +60,38 @@ export default function QuizResults({
     return { label: "Keep Practicing!", color: "#f1948a", emoji: "💪" }
   }
 
+  const getPerformanceAnalysis = (): string => {
+    const weaker: CognitiveLevel[] = []
+    const stronger: CognitiveLevel[] = []
+
+    if (cognitiveLevelStats) {
+      (["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"] as CognitiveLevel[]).forEach((level) => {
+        const stats = cognitiveLevelStats[level]
+        if (stats.total > 0) {
+          const pct = Math.round((stats.correct / stats.total) * 100)
+          if (pct >= 75) {
+            stronger.push(level)
+          } else if (pct < 50) {
+            weaker.push(level)
+          }
+        }
+      })
+    }
+
+    let analysis = ""
+    if (percentage >= 90) {
+      analysis = `Outstanding performance! You demonstrated mastery across the material. Continue practicing with challenging questions to deepen your understanding.`
+    } else if (percentage >= 75) {
+      analysis = `Strong performance! You've shown solid understanding of the material. ${weaker.length > 0 ? `Focus more on ${weaker.join(" and ")} level questions to strengthen these areas.` : ""}`
+    } else if (percentage >= 60) {
+      analysis = `Good effort! You're building a foundation. ${weaker.length > 0 ? `Consider spending more time on ${weaker.join(" and ")} level content to improve.` : "Review the material and try again to improve your score."}`
+    } else {
+      analysis = `Keep practicing! Review the material carefully. ${weaker.length > 0 ? `Pay special attention to ${weaker.join(" and ")} level concepts.` : "Try again and focus on understanding the core concepts."}`
+    }
+
+    return analysis
+  }
+
   const grade = getGrade()
 
   const difficultyColors: Record<string, string> = {
@@ -230,6 +262,34 @@ export default function QuizResults({
           <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {fileName}
           </span>
+        </div>
+
+        {/* Performance analysis */}
+        <div
+          className="qr-fadeup qr-fadeup-2"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 12,
+            padding: "16px 18px",
+            marginBottom: 20,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "rgba(255,255,255,0.4)",
+              textTransform: "uppercase",
+              letterSpacing: "1.2px",
+              marginBottom: 10,
+            }}
+          >
+            💡 Performance Insight
+          </div>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6 }}>
+            {getPerformanceAnalysis()}
+          </div>
         </div>
 
         {/* Cognitive level breakdown */}

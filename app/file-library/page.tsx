@@ -103,10 +103,10 @@ export default function FileLibraryPage() {
   }
 
   const handleMoveFileToFolder = (fileId: string, folderId: string) => {
-    const updatedFolders = folders.map(folder => {
+    const updatedFolders = folders.map((folder: any) => {
       if (folder.id === folderId) {
-        const file = files.find(f => f.id === fileId)
-        if (file && !folder.files.some(f => f.id === fileId)) {
+        const file = files.find((f: any) => f.id === fileId)
+        if (file && !folder.files.some((f: any) => f.id === fileId)) {
           return { ...folder, files: [...folder.files, file] }
         }
       }
@@ -437,7 +437,7 @@ export default function FileLibraryPage() {
                         <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: 12 }}>
                           {folder.name}
                         </div>
-                        <FileGrid files={folder.files} selectedFiles={selectedFiles} onToggleFile={handleToggleFile} />
+                        <FileGrid files={folder.files} selectedFiles={selectedFiles} onToggleSelection={handleToggleFile} />
                       </div>
                     ))}
                   </div>

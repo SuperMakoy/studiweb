@@ -255,6 +255,10 @@ export async function getQuizHistory(): Promise<QuizHistory[]> {
     const allFiles = await getUserFiles()
     const validFileIds = new Set(allFiles.map((f) => f.id))
 
+    // Get today's date at midnight
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
     const allQuizzes = querySnapshot.docs
       .map((doc) => ({
         id: doc.id,
@@ -269,6 +273,12 @@ export async function getQuizHistory(): Promise<QuizHistory[]> {
         completedAt: doc.data().completedAt.toDate(),
       }))
       .filter((quiz) => validFileIds.has(quiz.fileId))
+      // Filter to only today's quizzes
+      .filter((quiz) => {
+        const quizDate = new Date(quiz.completedAt)
+        quizDate.setHours(0, 0, 0, 0)
+        return quizDate.getTime() === today.getTime()
+      })
       .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime())
 
     // Keep only the first occurrence of each duplicate within 1-minute windows

@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { getUserFiles, getQuizHistory } from "@/lib/file-service"
 import { useAuth } from "@/hooks/use-auth"
 import Sidebar from "@/components/dashboard/sidebar"
@@ -135,17 +136,46 @@ function EmptyState({ hasFiles }: { hasFiles: boolean }) {
 
 // ─── Main Dashboard Page ──────────────────────────────────────────────────────
 export default function DashboardPage() {
+  const router = useRouter()
   const { user, loading } = useAuth()
   const [files, setFiles] = useState<any[]>([])
   const [quizzes, setQuizzes] = useState<any[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false)
 
   useEffect(() => {
     setCurrentDate(new Date().toLocaleDateString("en-US", {
       weekday: "long", year: "numeric", month: "long", day: "numeric",
     }))
   }, [])
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value
+    setSearchTerm(term)
+    
+    if (term.trim().length > 0) {
+      // Filter files by search term
+      const results = files.filter(f => 
+        (f.displayName || f.fileName).toLowerCase().includes(term.toLowerCase())
+      )
+      setSearchResults(results)
+      setShowSearchDropdown(true)
+    } else {
+      setSearchResults([])
+      setShowSearchDropdown(false)
+    }
+  }
+
+  const handleSelectFile = (fileId: string) => {
+    setSearchTerm("")
+    setShowSearchDropdown(false)
+    setSearchResults([])
+    // Navigate to the file library to start quiz
+    router.push(`/file-library/${fileId}`)
+  }
 
   useEffect(() => {
     if (loading || !user) return
@@ -233,7 +263,7 @@ export default function DashboardPage() {
 
           {/* Top bar */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 28px", borderBottom:"1px solid rgba(255,255,255,0.05)", background:"rgba(7,7,26,0.85)", backdropFilter:"blur(12px)", position:"sticky", top:0, zIndex:10 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:100, padding:"8px 16px", minWidth:220 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:100, padding:"8px 16px", minWidth:220, position:"relative" }}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ opacity:.4 }}>
                 <circle cx="6" cy="6" r="4.5" stroke="#fff" strokeWidth="1.3" />
                 <path d="M9.5 9.5l2.5 2.5" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
@@ -241,8 +271,29 @@ export default function DashboardPage() {
               <input
                 suppressHydrationWarning
                 placeholder="Search file to quiz…"
-                style={{ background:"none", border:"none", outline:"none", color:"#fff", fontSize:13, fontFamily:"inherit", width:"100%" }}
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onFocus={() => searchTerm.length > 0 && setShowSearchDropdown(true)}
+                onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
+                style={{ background:"none", border:"none", outline:"none", color:"#fff", fontSize:13, fontFamily:"inherit", width:"100%", paddingRight: 8 }}
               />
+              {/* Search dropdown */}
+              {showSearchDropdown && searchResults.length > 0 && (
+                <div style={{ position:"absolute", top:"100%", left:0, right:0, marginTop:8, background:"rgba(20,20,40,0.98)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, backdropFilter:"blur(12px)", boxShadow:"0 8px 24px rgba(0,0,0,0.4)", zIndex:20, maxHeight:320, overflowY:"auto" }}>
+                  {searchResults.map(file => (
+                    <button
+                      key={file.id}
+                      onClick={() => handleSelectFile(file.id)}
+                      style={{ width:"100%", padding:"12px 16px", border:"none", background:"none", color:"#fff", textAlign:"left", cursor:"pointer", borderBottom:"1px solid rgba(255,255,255,0.05)", transition:"background 0.2s", display:"flex", flexDirection:"column", gap:4 }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(91,110,232,0.1)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                    >
+                      <div style={{ fontSize:13, fontWeight:500 }}>{file.displayName || file.fileName}</div>
+                      <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)" }}>{(file.fileSize / 1024).toFixed(1)} KB</div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:14 }}>
               <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
@@ -360,7 +411,7 @@ export default function DashboardPage() {
               {hasQuizzes && (
                 <>
                   <div className="db-fadeup db-fadeup-3" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-                    <div style={{ fontFamily:"'Syne', sans-serif", fontSize:15, fontWeight:700, color:"#fff" }}>Recent Quizzes</div>
+                    <div style={{ fontFamily:"'Syne', sans-serif", fontSize:15, fontWeight:700, color:"#fff" }}>Today&apos;s Quizzes</div>
                   </div>
                   <div className="db-fadeup db-fadeup-3" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(145px, 1fr))", gap:10, marginBottom:24 }}>
                     {quizzes.map((q) => {

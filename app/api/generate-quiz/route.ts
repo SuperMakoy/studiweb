@@ -8,28 +8,37 @@ export async function POST(request: Request) {
       return Response.json({ error: "No file content provided" }, { status: 400 })
     }
 
-    const systemPrompt = `You are an expert educational quiz creator. Create a quiz with 5-10 multiple choice questions based on the provided study material.
+    const systemPrompt = `You are an expert educational quiz creator. Your ONLY job is to return valid JSON.
 
-Return ONLY valid JSON in this format:
+RETURN EXACTLY THIS JSON STRUCTURE - no other text:
 {
-  "fileName": "filename",
+  "fileName": "Study Material",
   "questions": [
     {
       "id": 1,
-      "question": "Question text here?",
-      "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+      "question": "What is...?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctAnswers": [0],
-      "type": "single"
+      "type": "single",
+      "cognitiveLevel": "Remember",
+      "explanation": "This is the correct answer because [reason in 2-3 sentences]."
     }
   ]
 }
 
-Rules:
-- Each question should have 4 options
-- correctAnswers array contains the index(es) of correct options (0-3)
-- type should be "single" for one correct answer, "multiple" for multiple correct answers
-- Create questions that test understanding, not just recall
-- Return ONLY valid JSON, no other text`
+ABSOLUTE RULES - FOLLOW EXACTLY:
+1. Create 5-10 questions from the study material
+2. Every question needs EXACTLY 4 options: options[0], options[1], options[2], options[3]
+3. correctAnswers: array with index numbers (e.g., [0] means first option is correct)
+4. type: use "single" OR "multiple"
+5. cognitiveLevel: MUST be "Remember", "Understand", "Apply", "Analyze", "Evaluate", or "Create"
+6. explanation: 2-4 sentences explaining WHY this answer is correct
+7. Mix cognitive levels across questions
+8. VALID JSON ONLY - no markdown, no code blocks, no extra text
+9. No trailing commas
+10. All strings in double quotes
+
+Return only the JSON object.`
 
     const { text } = await generateText({
       model: "groq/mixtral-8x7b-32768",
@@ -38,12 +47,47 @@ Rules:
     })
 
     // Parse the AI response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      throw new Error("Failed to parse AI response as JSON")
+    let quizData
+    try {
+      // Clean the response first - remove markdown code blocks if present
+      let cleanedText = text.trim()
+      if (cleanedText.startsWith("```json")) {
+        cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/```\s*$/, "")
+      } else if (cleanedText.startsWith("```")) {
+        cleanedText = cleanedText.replace(/^```\s*/, "").replace(/```\s*$/, "")
+      }
+      
+      // Try to extract JSON from the response
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
+        console.error("Raw text received:", text.substring(0, 200))
+        throw new Error("No JSON found in response")
+      }
+      
+      try {
+        quizData = JSON.parse(jsonMatch[0])
+      } catch (e) {
+        // If parsing fails, try removing any trailing/leading whitespace or commas
+        const cleanedJson = jsonMatch[0].replace(/,\s*}/, "}").replace(/,\s*]/, "]")
+        quizData = JSON.parse(cleanedJson)
+      }
+    } catch (parseError: any) {
+      console.error("JSON parsing error:", parseError.message, "Text:", text.substring(0, 300))
+      throw new Error("Failed to parse AI response as valid JSON")
     }
 
-    const quizData = JSON.parse(jsonMatch[0])
+    // Ensure all questions have required fields including explanation
+    if (quizData.questions && Array.isArray(quizData.questions)) {
+      quizData.questions = quizData.questions.map((q: any, idx: number) => ({
+        id: q.id ?? idx + 1,
+        question: q.question ?? "",
+        options: q.options ?? [],
+        correctAnswers: q.correctAnswers ?? [0],
+        type: q.type ?? "single",
+        cognitiveLevel: q.cognitiveLevel ?? "Remember",
+        explanation: q.explanation ?? "Refer to the study material for the explanation of this answer.",
+      }))
+    }
 
     return Response.json(quizData)
   } catch (error: any) {

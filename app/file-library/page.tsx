@@ -15,6 +15,10 @@ export default function FileLibraryPage() {
   const [filteredFiles, setFilteredFiles] = useState<any[]>([])
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
+  const [folders, setFolders] = useState<any[]>([])
+  const [showCreateFolder, setShowCreateFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState("")
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (loading) return
@@ -76,6 +80,39 @@ export default function FileLibraryPage() {
     )
     setFiles(updatedFiles)
     setFilteredFiles(updatedFiles)
+  }
+
+  const handleCreateFolder = () => {
+    if (newFolderName.trim()) {
+      const newFolder = {
+        id: `folder_${Date.now()}`,
+        name: newFolderName,
+        files: [],
+        createdAt: new Date().toISOString(),
+      }
+      setFolders([...folders, newFolder])
+      setNewFolderName("")
+      setShowCreateFolder(false)
+    }
+  }
+
+  const toggleFolderExpand = (folderId: string) => {
+    const newExpanded = new Set(expandedFolders)
+    newExpanded.has(folderId) ? newExpanded.delete(folderId) : newExpanded.add(folderId)
+    setExpandedFolders(newExpanded)
+  }
+
+  const handleMoveFileToFolder = (fileId: string, folderId: string) => {
+    const updatedFolders = folders.map((folder: any) => {
+      if (folder.id === folderId) {
+        const file = files.find((f: any) => f.id === fileId)
+        if (file && !folder.files.some((f: any) => f.id === fileId)) {
+          return { ...folder, files: [...folder.files, file] }
+        }
+      }
+      return folder
+    })
+    setFolders(updatedFolders)
   }
 
   return (
@@ -259,6 +296,83 @@ export default function FileLibraryPage() {
               </div>
 
               <FileUploadButton onFileAdd={handleFileAdd} />
+              
+              {/* Create Folder Button */}
+              {!showCreateFolder ? (
+                <button
+                  onClick={() => setShowCreateFolder(true)}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#fff",
+                    background: "rgba(91,110,232,0.15)",
+                    border: "1px solid rgba(91,110,232,0.3)",
+                    cursor: "pointer",
+                    transition: "all .2s",
+                    fontFamily: "inherit",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <span>📁</span> New Folder
+                </button>
+              ) : (
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    type="text"
+                    placeholder="Folder name..."
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleCreateFolder()}
+                    autoFocus
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 6,
+                      fontSize: 13,
+                      background: "rgba(91,110,232,0.15)",
+                      border: "1px solid rgba(91,110,232,0.3)",
+                      color: "#fff",
+                      fontFamily: "inherit",
+                      outline: "none",
+                    }}
+                  />
+                  <button
+                    onClick={handleCreateFolder}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#fff",
+                      background: "rgba(88,214,141,0.2)",
+                      border: "1px solid rgba(88,214,141,0.4)",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Create
+                  </button>
+                  <button
+                    onClick={() => { setShowCreateFolder(false); setNewFolderName(""); }}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#fff",
+                      background: "rgba(255,107,107,0.2)",
+                      border: "1px solid rgba(255,107,107,0.4)",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -277,7 +391,61 @@ export default function FileLibraryPage() {
               >
                 Loading files…
               </div>
-            ) : filteredFiles.length === 0 ? (
+            ) : folders.length > 0 ? (
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: 12, letterSpacing: "0.5px" }}>
+                  Folders ({folders.length})
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 12, marginBottom: 24 }}>
+                  {folders.map(folder => (
+                    <div
+                      key={folder.id}
+                      onClick={() => toggleFolderExpand(folder.id)}
+                      style={{
+                        padding: 12,
+                        borderRadius: 10,
+                        background: "rgba(91,110,232,0.1)",
+                        border: "1px solid rgba(91,110,232,0.2)",
+                        cursor: "pointer",
+                        transition: "all .2s",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 8,
+                        textAlign: "center",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(91,110,232,0.15)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(91,110,232,0.1)")}
+                    >
+                      <span style={{ fontSize: 32 }}>📁</span>
+                      <div>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: "#fff", margin: 0, wordBreak: "break-word" }}>
+                          {folder.name}
+                        </p>
+                        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>
+                          {folder.files.length} item{folder.files.length !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {expandedFolders.size > 0 && (
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 24 }}>
+                    {folders.map(folder => expandedFolders.has(folder.id) && folder.files.length > 0 && (
+                      <div key={folder.id} style={{ marginBottom: 24 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: 12 }}>
+                          {folder.name}
+                        </div>
+                        <FileGrid files={folder.files} selectedFiles={selectedFiles} onToggleSelection={handleToggleFile} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {filteredFiles.length === 0 && folders.length === 0 ? (
               <div
                 style={{
                   display: "flex",
@@ -297,13 +465,20 @@ export default function FileLibraryPage() {
                   {files.length === 0 ? "No files yet. Upload a file to get started!" : "No files match your search."}
                 </p>
               </div>
-            ) : (
-              <DarkFileGrid
-                files={filteredFiles}
-                selectedFiles={selectedFiles}
-                onToggleSelection={handleToggleFile}
-              />
-            )}
+            ) : filteredFiles.length > 0 ? (
+              <div>
+                {folders.length > 0 && (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: 12, letterSpacing: "0.5px" }}>
+                    Files ({filteredFiles.length})
+                  </div>
+                )}
+                <DarkFileGrid
+                  files={filteredFiles}
+                  selectedFiles={selectedFiles}
+                  onToggleSelection={handleToggleFile}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

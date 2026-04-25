@@ -13,6 +13,7 @@ interface Question {
   correctAnswers: number[]
   type: "single" | "multiple"
   cognitiveLevel?: CognitiveLevel
+  explanation?: string
 }
 
 interface Quiz {
@@ -65,6 +66,8 @@ export default function QuizGame({
   const [currentStreak, setCurrentStreak] = useState(0)
   const [answerHistory, setAnswerHistory] = useState<AnswerRecord[]>([])
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [feedbackIsCorrect, setFeedbackIsCorrect] = useState(false)
 
   const currentQuestion = quiz.questions[currentQuestionIndex]
   const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1
@@ -90,6 +93,9 @@ export default function QuizGame({
   }, [currentQuestionIndex])
 
   const handleSelectAnswer = (optionIndex: number) => {
+    // Don't allow changing answer after feedback is shown
+    if (showFeedback) return
+
     const questionId = currentQuestion.id
     const currentAnswers = selectedAnswers[questionId] || []
     if (currentQuestion.type === "single") {
@@ -120,12 +126,20 @@ export default function QuizGame({
   }
 
   const handleNext = () => {
-    const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000)
     const userAnswers = selectedAnswers[currentQuestion.id] || []
     const isCorrect =
       userAnswers.length === currentQuestion.correctAnswers.length &&
       userAnswers.every((a) => currentQuestion.correctAnswers.includes(a))
 
+    // Show feedback instead of moving to next question
+    if (!showFeedback) {
+      setShowFeedback(true)
+      setFeedbackIsCorrect(isCorrect)
+      return
+    }
+
+    // After feedback is shown, proceed to next question
+    const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000)
     setAnswerHistory([
       ...answerHistory,
       { questionId: currentQuestion.id, isCorrect, timeSpent, cognitiveLevel: currentQuestion.cognitiveLevel },
@@ -139,6 +153,8 @@ export default function QuizGame({
       setShowResults(true)
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
+      setShowFeedback(false)
+      setSelectedAnswers({ ...selectedAnswers, [currentQuestion.id]: [] })
     }
   }
 
@@ -228,6 +244,10 @@ export default function QuizGame({
           50% { box-shadow: 0 0 0 6px rgba(255,107,107,0); }
         }
         .timer-low { animation: qgPulse 1s ease-in-out infinite; }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
 
       <div
@@ -482,6 +502,88 @@ export default function QuizGame({
               ? "Select all correct answers"
               : "Select the correct answer"}
           </p>
+
+          {/* Feedback display */}
+          {showFeedback && (
+            <div
+              style={{
+                marginTop: 20,
+                padding: 16,
+                borderRadius: 12,
+                border: `2px solid ${feedbackIsCorrect ? "#58d68d" : "#FF6B6B"}`,
+                background: feedbackIsCorrect ? "rgba(88,214,141,0.1)" : "rgba(255,107,107,0.1)",
+                animation: "fadeIn 0.3s ease",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 10,
+                }}
+              >
+                <span style={{ fontSize: 18 }}>
+                  {feedbackIsCorrect ? "✅" : "❌"}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'Syne', sans-serif",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    color: feedbackIsCorrect ? "#58d68d" : "#FF6B6B",
+                  }}
+                >
+                  {feedbackIsCorrect ? "Correct!" : "Incorrect"}
+                </span>
+              </div>
+
+              {!feedbackIsCorrect && (
+                <div style={{ marginBottom: 10 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "rgba(255,255,255,0.4)",
+                      marginBottom: 6,
+                      textTransform: "uppercase",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Correct Answer:
+                  </div>
+                  <div
+                    style={{
+                      padding: 10,
+                      background: "rgba(88,214,141,0.15)",
+                      borderLeft: "3px solid #58d68d",
+                      borderRadius: 6,
+                      fontSize: 13,
+                      color: "#fff",
+                    }}
+                  >
+                    {currentQuestion.correctAnswers.map((idx) => currentQuestion.options[idx]).join(" / ")}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "rgba(255,255,255,0.4)",
+                    marginBottom: 6,
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                  }}
+                >
+                  Why:
+                </div>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>
+                  {currentQuestion.explanation || "No explanation provided."}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Controls */}
@@ -541,7 +643,7 @@ export default function QuizGame({
                 boxShadow: "0 4px 14px rgba(91,110,232,0.35)",
               }}
             >
-              {isLastQuestion ? "Finish 🏁" : "Next →"}
+              {showFeedback ? (isLastQuestion ? "View Results 🏁" : "Continue →") : (isLastQuestion ? "Finish 🏁" : "Next →")}
             </button>
           </div>
         </div>

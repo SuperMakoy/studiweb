@@ -145,8 +145,20 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [showSearchDropdown, setShowSearchDropdown] = useState(false)
-  const [selectedBloomsQuizId, setSelectedBloomsQuizId] = useState<string | null>(null)
+  const [selectedBloomsFileName, setSelectedBloomsFileName] = useState<string | null>(null)
   const [bloomsData, setBloomsData] = useState<any>(null)
+
+  // Group quizzes by fileName to show averages
+  const getGroupedQuizzesByFile = () => {
+    const grouped: Record<string, any[]> = {}
+    quizzes.forEach(quiz => {
+      if (!grouped[quiz.fileName]) {
+        grouped[quiz.fileName] = []
+      }
+      grouped[quiz.fileName].push(quiz)
+    })
+    return grouped
+  }
 
   useEffect(() => {
     setCurrentDate(new Date().toLocaleDateString("en-US", {
@@ -179,27 +191,29 @@ export default function DashboardPage() {
     router.push(`/file-library/${fileId}`)
   }
 
-  const calculateBloomsStats = (quizId: string) => {
-    // Find the quiz in the history
-    const quiz = quizzes.find(q => q.id === quizId)
-    if (!quiz) return null
+  const calculateBloomsStats = (fileName: string) => {
+    // Get all quizzes for this file
+    const fileQuizzes = quizzes.filter(q => q.fileName === fileName)
+    if (fileQuizzes.length === 0) return null
     
-    // Parse stored quiz details from the quiz object
-    // Since we don't have the full question data in the dashboard,
-    // we'll show this is available and return placeholder for now
-    // The actual bloom's data with cognitive levels will come from the quiz itself
+    // Calculate averages across all attempts
+    const avgScore = fileQuizzes.reduce((sum, q) => sum + q.score, 0) / fileQuizzes.length
+    const avgTotal = Math.round(fileQuizzes.reduce((sum, q) => sum + q.totalQuestions, 0) / fileQuizzes.length)
+    const avgPoints = Math.round(fileQuizzes.reduce((sum, q) => sum + (q.points || 0), 0) / fileQuizzes.length)
+    
     return {
-      quizId: quiz.id,
-      fileName: quiz.fileName,
-      date: quiz.completedAt,
-      score: quiz.score,
-      totalQuestions: quiz.totalQuestions,
+      fileName: fileName,
+      attempts: fileQuizzes.length,
+      avgScore: Math.round(avgScore),
+      avgTotal: avgTotal,
+      avgPoints: avgPoints,
+      avgPercentage: Math.round((avgScore / avgTotal) * 100),
     }
   }
 
-  const handleBloomsQuizSelect = (quizId: string) => {
-    setSelectedBloomsQuizId(quizId)
-    const stats = calculateBloomsStats(quizId)
+  const handleBloomsFileSelect = (fileName: string) => {
+    setSelectedBloomsFileName(fileName)
+    const stats = calculateBloomsStats(fileName)
     setBloomsData(stats)
   }
 
@@ -478,8 +492,8 @@ export default function DashboardPage() {
                       
                       {/* Quiz selector dropdown */}
                       <select
-                        value={selectedBloomsQuizId || ""}
-                        onChange={(e) => e.target.value && handleBloomsQuizSelect(e.target.value)}
+                        value={selectedBloomsFileName || ""}
+                        onChange={(e) => e.target.value && handleBloomsFileSelect(e.target.value)}
                         style={{
                           padding:"6px 10px",
                           borderRadius:6,
@@ -498,23 +512,23 @@ export default function DashboardPage() {
                           backgroundSize:"12px",
                         }}
                       >
-                        <option value="">Select a quiz</option>
-                        {quizzes.map((q) => (
-                          <option key={q.id} value={q.id}>
-                            {q.fileName} ({q.score}/{q.totalQuestions})
+                        <option value="">Select a file</option>
+                        {Object.keys(getGroupedQuizzesByFile()).map((fileName) => (
+                          <option key={fileName} value={fileName}>
+                            {fileName}
                           </option>
                         ))}
                       </select>
                     </div>
                     
-                    {!selectedBloomsQuizId ? (
+                    {!selectedBloomsFileName ? (
                       <p style={{ fontSize:12, color:"rgba(255,255,255,0.3)", marginTop:10 }}>
-                        Select a quiz to view detailed Bloom&apos;s Taxonomy breakdown by cognitive level.
+                        Select a file to view Bloom&apos;s Taxonomy breakdown by cognitive level. Shows average across all attempts.
                       </p>
                     ) : bloomsData ? (
                       <div style={{ marginTop:12 }}>
                         <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginBottom:10, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.5px" }}>
-                          {bloomsData.fileName} · Score: {bloomsData.score}/{bloomsData.totalQuestions}
+                          {bloomsData.fileName} · Avg: {bloomsData.avgScore}/{bloomsData.avgTotal} ({bloomsData.avgPercentage}%) · {bloomsData.attempts} attempt{bloomsData.attempts !== 1 ? "s" : ""}
                         </div>
                         {LEVELS.map((lv) => {
                           // Note: This is placeholder data. In production, cognitive levels should be stored with quiz results

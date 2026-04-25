@@ -49,14 +49,30 @@ Return only the JSON object.`
     // Parse the AI response
     let quizData
     try {
+      // Clean the response first - remove markdown code blocks if present
+      let cleanedText = text.trim()
+      if (cleanedText.startsWith("```json")) {
+        cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/```\s*$/, "")
+      } else if (cleanedText.startsWith("```")) {
+        cleanedText = cleanedText.replace(/^```\s*/, "").replace(/```\s*$/, "")
+      }
+      
       // Try to extract JSON from the response
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
+        console.error("Raw text received:", text.substring(0, 200))
         throw new Error("No JSON found in response")
       }
-      quizData = JSON.parse(jsonMatch[0])
+      
+      try {
+        quizData = JSON.parse(jsonMatch[0])
+      } catch (e) {
+        // If parsing fails, try removing any trailing/leading whitespace or commas
+        const cleanedJson = jsonMatch[0].replace(/,\s*}/, "}").replace(/,\s*]/, "]")
+        quizData = JSON.parse(cleanedJson)
+      }
     } catch (parseError: any) {
-      console.error("JSON parsing error:", parseError.message)
+      console.error("JSON parsing error:", parseError.message, "Text:", text.substring(0, 300))
       throw new Error("Failed to parse AI response as valid JSON")
     }
 

@@ -532,10 +532,11 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         ))}
-                        <div style={{ marginTop:12, padding:"10px 12px", background:"rgba(91,110,232,0.08)", borderLeft:"2px solid rgba(91,110,232,0.3)", borderRadius:6, fontSize:11, color:"rgba(255,255,255,0.5)" }}>
-                          💡 Detailed cognitive level data will be available as you complete more quizzes.
-                        </div>
                       </div>
+                      <div style={{ marginTop:12, padding:"10px 12px", background:"rgba(91,110,232,0.08)", borderLeft:"2px solid rgba(91,110,232,0.3)", borderRadius:6, fontSize:11, color:"rgba(255,255,255,0.5)" }}>
+                        💡 Detailed cognitive level data will be available as you complete more quizzes.
+                      </div>
+                    </div>
                     ) : null}
                   </div>
 

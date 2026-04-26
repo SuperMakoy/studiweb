@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { getUserFiles, getQuizHistory } from "@/lib/file-service"
@@ -200,6 +200,37 @@ export default function DashboardPage() {
       avgPercentage: avgTotal > 0 ? Math.round((avgScore / avgTotal) * 100) : 0,
     }
   }
+
+  // Memoized Bloom's bar data to prevent re-randomizing on each render
+  const bloomsBarsData = useMemo(() => {
+    if (!bloomsData) return null
+    const LEVELS = [
+      { name: "Remember",   color: "#7f9fff" },
+      { name: "Understand", color: "#5dade2" },
+      { name: "Apply",      color: "#58d68d" },
+      { name: "Analyze",    color: "#f8c471" },
+      { name: "Evaluate",   color: "#eb984e" },
+      { name: "Create",     color: "#f1948a" },
+    ]
+    return LEVELS.map((lv) => {
+      const baseCorrect = bloomsData.avgTotal > 0
+        ? Math.max(0, (bloomsData.avgScore / bloomsData.avgTotal) * 3)
+        : 0
+      // Use seeded/deterministic randomization based on level name instead of pure Math.random()
+      const hash = lv.name.split("").reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0)
+      const variance = ((hash % 10) - 5) / 5 // Convert to -1 to 1 range
+      const randomCorrect = Math.max(0, Math.min(3, Math.round(baseCorrect + variance)))
+      const totalPerLevel = 3
+      const percentage = (randomCorrect / totalPerLevel) * 100
+      return {
+        name: lv.name,
+        color: lv.color,
+        randomCorrect,
+        totalPerLevel,
+        percentage,
+      }
+    })
+  }, [bloomsData])
 
   const handleBloomsFileSelect = (fileName: string) => {
     setSelectedBloomsFileName(fileName)

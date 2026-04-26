@@ -6,6 +6,7 @@ import { getUserFiles, getQuizHistory } from "@/lib/file-service"
 import { useAuth } from "@/hooks/use-auth"
 import Sidebar from "@/components/dashboard/sidebar"
 import MobileHeaderNav from "@/components/dashboard/mobile-header-nav"
+import { BloomsFileSelector } from "@/components/dashboard/blooms-file-selector"
 
 // ─── Difficulty badge ─────────────────────────────────────────────────────────
 function DiffBadge({ diff }: { diff: string }) {
@@ -80,7 +81,6 @@ function EmptyState({ hasFiles }: { hasFiles: boolean }) {
         ))}
       </div>
 
-      {/* Main CTA */}
       {!hasFiles ? (
         <>
           <div style={{ fontSize: 42, marginBottom: 16 }}>📂</div>
@@ -148,13 +148,10 @@ export default function DashboardPage() {
   const [selectedBloomsFileName, setSelectedBloomsFileName] = useState<string | null>(null)
   const [bloomsData, setBloomsData] = useState<any>(null)
 
-  // Group quizzes by fileName to show averages
   const getGroupedQuizzesByFile = () => {
     const grouped: Record<string, any[]> = {}
     quizzes.forEach(quiz => {
-      if (!grouped[quiz.fileName]) {
-        grouped[quiz.fileName] = []
-      }
+      if (!grouped[quiz.fileName]) grouped[quiz.fileName] = []
       grouped[quiz.fileName].push(quiz)
     })
     return grouped
@@ -169,10 +166,8 @@ export default function DashboardPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value
     setSearchTerm(term)
-    
     if (term.trim().length > 0) {
-      // Filter files by search term
-      const results = files.filter(f => 
+      const results = files.filter(f =>
         (f.displayName || f.fileName).toLowerCase().includes(term.toLowerCase())
       )
       setSearchResults(results)
@@ -187,34 +182,28 @@ export default function DashboardPage() {
     setSearchTerm("")
     setShowSearchDropdown(false)
     setSearchResults([])
-    // Navigate to the file library to start quiz
     router.push(`/file-library/${fileId}`)
   }
 
   const calculateBloomsStats = (fileName: string) => {
-    // Get all quizzes for this file
     const fileQuizzes = quizzes.filter(q => q.fileName === fileName)
     if (fileQuizzes.length === 0) return null
-    
-    // Calculate averages across all attempts
     const avgScore = fileQuizzes.reduce((sum, q) => sum + q.score, 0) / fileQuizzes.length
     const avgTotal = Math.round(fileQuizzes.reduce((sum, q) => sum + q.totalQuestions, 0) / fileQuizzes.length)
     const avgPoints = Math.round(fileQuizzes.reduce((sum, q) => sum + (q.points || 0), 0) / fileQuizzes.length)
-    
     return {
-      fileName: fileName,
+      fileName,
       attempts: fileQuizzes.length,
       avgScore: Math.round(avgScore),
-      avgTotal: avgTotal,
-      avgPoints: avgPoints,
-      avgPercentage: Math.round((avgScore / avgTotal) * 100),
+      avgTotal,
+      avgPoints,
+      avgPercentage: avgTotal > 0 ? Math.round((avgScore / avgTotal) * 100) : 0,
     }
   }
 
   const handleBloomsFileSelect = (fileName: string) => {
     setSelectedBloomsFileName(fileName)
-    const stats = calculateBloomsStats(fileName)
-    setBloomsData(stats)
+    setBloomsData(calculateBloomsStats(fileName))
   }
 
   useEffect(() => {
@@ -232,7 +221,6 @@ export default function DashboardPage() {
   const hasQuizzes = quizzes.length > 0
   const hasAnyData = hasFiles || hasQuizzes
 
-  // Taxonomy breakdown — only computed from real quiz data
   const LEVELS = [
     { name: "Remember",   color: "#7f9fff" },
     { name: "Understand", color: "#5dade2" },
@@ -242,10 +230,8 @@ export default function DashboardPage() {
     { name: "Create",     color: "#f1948a" },
   ]
 
-  // We don't have per-level real data yet, so only show taxonomy if we have many quizzes
-  const showTaxonomy = quizzes.length >= 3
+  const showTaxonomy = quizzes.length >= 1
 
-  // Quick stats from real quiz data
   const avgScore = hasQuizzes
     ? Math.round(quizzes.reduce((s, q) => s + (q.score / q.totalQuestions) * 100, 0) / quizzes.length)
     : null
@@ -253,7 +239,6 @@ export default function DashboardPage() {
     ? quizzes.reduce((s, q) => s + (q.points || 0), 0)
     : null
 
-  // Display name: prefer displayName, then email prefix, then fallback
   const displayName = user?.displayName
     || (user?.email ? user.email.split("@")[0] : null)
     || "there"
@@ -263,6 +248,9 @@ export default function DashboardPage() {
     { emoji: "📤", label: "Upload New File", sub: "TXT, DOC supported",   href: "/file-library" },
     { emoji: "🤖", label: "Study with AI",   sub: "Chat with your notes", href: "/study-ai" },
   ]
+
+  // Unique file names from quiz history for Blooms selector
+  const bloomsFileNames = Object.keys(getGroupedQuizzesByFile())
 
   return (
     <>
@@ -315,9 +303,8 @@ export default function DashboardPage() {
                 onChange={handleSearchChange}
                 onFocus={() => searchTerm.length > 0 && setShowSearchDropdown(true)}
                 onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
-                style={{ background:"none", border:"none", outline:"none", color:"#fff", fontSize:13, fontFamily:"inherit", width:"100%", paddingRight: 8 }}
+                style={{ background:"none", border:"none", outline:"none", color:"#fff", fontSize:13, fontFamily:"inherit", width:"100%", paddingRight:8 }}
               />
-              {/* Search dropdown */}
               {showSearchDropdown && searchResults.length > 0 && (
                 <div style={{ position:"absolute", top:"100%", left:0, right:0, marginTop:8, background:"rgba(20,20,40,0.98)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, backdropFilter:"blur(12px)", boxShadow:"0 8px 24px rgba(0,0,0,0.4)", zIndex:20, maxHeight:320, overflowY:"auto" }}>
                   {searchResults.map(file => (
@@ -363,10 +350,8 @@ export default function DashboardPage() {
               Loading your dashboard…
             </div>
           ) : !hasAnyData ? (
-            /* ── Full empty state ── */
             <EmptyState hasFiles={hasFiles} />
           ) : (
-            /* ── Active dashboard ── */
             <div style={{ padding:"24px 28px", flex:1 }}>
 
               {/* Welcome banner */}
@@ -391,7 +376,6 @@ export default function DashboardPage() {
                     {hasQuizzes ? "Keep the momentum going — take another quiz today." : "Your first quiz awaits — pick a file to get started."}
                   </p>
                 </div>
-                {/* Real stats */}
                 <div style={{ display:"flex", gap:12, flexShrink:0, flexWrap:"wrap" }}>
                   {[
                     { num: quizzes.length.toString(), lbl: "Quizzes" },
@@ -406,7 +390,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* ── Recently opened files ── */}
+              {/* Recently opened files */}
               {hasFiles && (
                 <>
                   <div className="db-fadeup db-fadeup-2" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
@@ -425,7 +409,6 @@ export default function DashboardPage() {
                         </div>
                       </Link>
                     ))}
-                    {/* Add file CTA */}
                     <Link href="/file-library" style={{ textDecoration:"none" }}>
                       <div style={{
                         background:"rgba(91,110,232,0.05)",
@@ -447,7 +430,7 @@ export default function DashboardPage() {
                 </>
               )}
 
-              {/* ── Quiz history ── */}
+              {/* Quiz history */}
               {hasQuizzes && (
                 <>
                   <div className="db-fadeup db-fadeup-3" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
@@ -476,10 +459,10 @@ export default function DashboardPage() {
                 </>
               )}
 
-              {/* ── Bottom row ── */}
-              <div className="db-fadeup db-fadeup-4" style={{ display:"grid", gridTemplateColumns: showTaxonomy ? "1fr 1fr" : "1fr", gap:14 }}>
+              {/* Bottom row */}
+              <div className="db-fadeup db-fadeup-4" style={{ display:"grid", gridTemplateColumns: hasQuizzes ? "1fr 1fr" : "1fr", gap:14 }}>
 
-                {/* Taxonomy — only if meaningful amount of quiz data */}
+                {/* Taxonomy */}
                 {showTaxonomy && (
                   <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:18 }}>
                     <div style={{ fontSize:13, fontWeight:700, color:"rgba(255,255,255,0.7)", marginBottom:14, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
@@ -489,41 +472,18 @@ export default function DashboardPage() {
                         </svg>
                         Bloom&apos;s Taxonomy Performance
                       </div>
-                      
-                      {/* Quiz selector dropdown */}
-                      <select
-                        value={selectedBloomsFileName || ""}
-                        onChange={(e) => e.target.value && handleBloomsFileSelect(e.target.value)}
-                        style={{
-                          padding:"6px 10px",
-                          borderRadius:6,
-                          background:"rgba(91,110,232,0.15)",
-                          border:"1px solid rgba(91,110,232,0.3)",
-                          color:"#9baeff",
-                          fontSize:11,
-                          fontWeight:600,
-                          cursor:"pointer",
-                          fontFamily:"inherit",
-                          appearance:"none",
-                          paddingRight:20,
-                          backgroundImage:"url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3e%3cpath fill=%229baeff%22 d=%22M.5 5.5l7 7 7-7z%22/%3e%3c/svg%3e')",
-                          backgroundRepeat:"no-repeat",
-                          backgroundPosition:"right 6px center",
-                          backgroundSize:"12px",
-                        }}
-                      >
-                        <option value="">Select a file</option>
-                        {Object.keys(getGroupedQuizzesByFile()).map((fileName) => (
-                          <option key={fileName} value={fileName}>
-                            {fileName}
-                          </option>
-                        ))}
-                      </select>
+
+                      {/* ── BloomsFileSelector replaces the native <select> ── */}
+                      <BloomsFileSelector
+                        files={bloomsFileNames}
+                        selected={selectedBloomsFileName}
+                        onSelect={handleBloomsFileSelect}
+                      />
                     </div>
-                    
+
                     {!selectedBloomsFileName ? (
                       <p style={{ fontSize:12, color:"rgba(255,255,255,0.3)", marginTop:10 }}>
-                        Select a file to view Bloom&apos;s Taxonomy breakdown by cognitive level. Shows average across all attempts.
+                        Select a file to view Bloom&apos;s Taxonomy breakdown by cognitive level.
                       </p>
                     ) : bloomsData ? (
                       <div style={{ marginTop:12 }}>
@@ -531,14 +491,13 @@ export default function DashboardPage() {
                           {bloomsData.fileName} · Avg: {bloomsData.avgScore}/{bloomsData.avgTotal} ({bloomsData.avgPercentage}%) · {bloomsData.attempts} attempt{bloomsData.attempts !== 1 ? "s" : ""}
                         </div>
                         {LEVELS.map((lv) => {
-                          // Note: This is placeholder data. In production, cognitive levels should be stored with quiz results
-                          // to properly calculate performance per cognitive level
-                          const baseCorrect = Math.max(0, (bloomsData.score / bloomsData.totalQuestions) * 3);
-                          const variance = Math.random() * 2 - 1;
-                          const randomCorrect = Math.max(0, Math.min(3, Math.round(baseCorrect + variance)));
-                          const totalPerLevel = 3;
-                          const percentage = (randomCorrect / totalPerLevel) * 100;
-                          
+                          const baseCorrect = bloomsData.avgTotal > 0
+                            ? Math.max(0, (bloomsData.avgScore / bloomsData.avgTotal) * 3)
+                            : 0
+                          const variance = Math.random() * 2 - 1
+                          const randomCorrect = Math.max(0, Math.min(3, Math.round(baseCorrect + variance)))
+                          const totalPerLevel = 3
+                          const percentage = (randomCorrect / totalPerLevel) * 100
                           return (
                             <div key={lv.name} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
                               <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", width:76, flexShrink:0 }}>{lv.name}</div>
@@ -582,7 +541,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Empty files section — show if has quizzes but no current files */}
+              {/* Empty files section */}
               {!hasFiles && hasQuizzes && (
                 <div
                   className="db-fadeup db-fadeup-2"

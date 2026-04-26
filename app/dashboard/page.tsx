@@ -538,7 +538,6 @@ export default function DashboardPage() {
                       </div>
                     ) : null}
                   </div>
-                )}
 
                 {/* Quick actions */}
                 <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:18 }}>

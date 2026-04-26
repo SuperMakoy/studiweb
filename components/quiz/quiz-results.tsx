@@ -2,14 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useRef } from "react"
-import { saveQuizResult } from "@/lib/file-service"
-
-type CognitiveLevel = "Remember" | "Understand" | "Apply" | "Analyze" | "Evaluate" | "Create"
-
-interface CognitiveLevelStats {
-  total: number
-  correct: number
-}
+import { saveQuizResult, type CognitiveLevelStats, type CognitiveLevel } from "@/lib/file-service"
 
 interface QuizResultsProps {
   score: number
@@ -47,11 +40,11 @@ export default function QuizResults({
   useEffect(() => {
     if (fileId && !hasSaved.current) {
       hasSaved.current = true
-      saveQuizResult(fileId, fileName, score, totalQuestions, timeElapsed, difficulty, points).catch(
+      saveQuizResult(fileId, fileName, score, totalQuestions, timeElapsed, difficulty, points, cognitiveLevelStats).catch(
         (err) => console.error("Failed to save quiz result:", err)
       )
     }
-  }, [fileId, fileName, score, totalQuestions, timeElapsed, difficulty, points])
+  }, [fileId, fileName, score, totalQuestions, timeElapsed, difficulty, points, cognitiveLevelStats])
 
   const getGrade = () => {
     if (percentage >= 90) return { label: "Excellent!", color: "#58d68d", emoji: "🏆" }

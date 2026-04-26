@@ -1,4 +1,5 @@
 import { generateText } from "ai"
+import { createGroq } from "@ai-sdk/groq"
 import { getFileContent } from "@/lib/file-service"
 
 export async function POST(request: Request) {
@@ -8,6 +9,19 @@ export async function POST(request: Request) {
     if (!fileId || !message) {
       return Response.json({ error: "Missing required fields" }, { status: 400 })
     }
+
+    // Validate Groq API key
+    if (!process.env.GROQ_API_KEY) {
+      return Response.json(
+        { error: "Groq API key not configured. Please set GROQ_API_KEY in environment variables." },
+        { status: 500 }
+      )
+    }
+
+    // Initialize Groq provider
+    const groq = createGroq({
+      apiKey: process.env.GROQ_API_KEY,
+    })
 
     // Get file content for context
     let fileContent = ""
@@ -42,7 +56,7 @@ ${conversationContext}
 Respond naturally and helpfully to the student's question.`
 
     const { text } = await generateText({
-      model: "groq/llama-3.3-70b-versatile",
+      model: groq("llama-3.3-70b-versatile"),
       system: systemPrompt,
       prompt: `Student's Question: ${message}`,
     })

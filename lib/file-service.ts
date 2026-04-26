@@ -24,6 +24,13 @@ export interface StudyFile {
   lastModified?: Date
 }
 
+export interface CognitiveLevelStats {
+  total: number
+  correct: number
+}
+
+export type CognitiveLevel = "Remember" | "Understand" | "Apply" | "Analyze" | "Evaluate" | "Create"
+
 export interface QuizHistory {
   id: string
   userId: string
@@ -34,6 +41,7 @@ export interface QuizHistory {
   timeElapsed: string
   difficulty: "easy" | "moderate" | "hard"
   points?: number // Added points field
+  cognitiveLevelStats?: Record<CognitiveLevel, CognitiveLevelStats> // Added cognitive level breakdown
   completedAt: Date
 }
 
@@ -188,6 +196,7 @@ export async function saveQuizResult(
   timeElapsed: string,
   difficulty: "easy" | "moderate" | "hard" = "moderate",
   points = 0, // Added points parameter
+  cognitiveLevelStats?: Record<CognitiveLevel, CognitiveLevelStats>, // Added cognitive level stats
 ): Promise<QuizHistory> {
   const user = auth.currentUser
   if (!user) throw new Error("User not authenticated")
@@ -223,6 +232,7 @@ export async function saveQuizResult(
       timeElapsed: timeElapsed,
       difficulty: difficulty,
       points: points,
+      cognitiveLevelStats: cognitiveLevelStats || {}, // Save cognitive level stats
       completedAt: Timestamp.now(),
     })
 
@@ -236,6 +246,7 @@ export async function saveQuizResult(
       timeElapsed: timeElapsed,
       difficulty: difficulty,
       points: points,
+      cognitiveLevelStats: cognitiveLevelStats,
       completedAt: new Date(),
     }
   } catch (error) {
@@ -270,6 +281,7 @@ export async function getQuizHistory(): Promise<QuizHistory[]> {
         timeElapsed: doc.data().timeElapsed,
         difficulty: doc.data().difficulty || "moderate",
         points: doc.data().points || 0, // Added points field with fallback
+        cognitiveLevelStats: doc.data().cognitiveLevelStats, // Added cognitive level stats
         completedAt: doc.data().completedAt.toDate(),
       }))
       .filter((quiz) => validFileIds.has(quiz.fileId))

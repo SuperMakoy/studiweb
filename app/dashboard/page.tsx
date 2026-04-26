@@ -516,27 +516,19 @@ export default function DashboardPage() {
                       <p style={{ fontSize:12, color:"rgba(255,255,255,0.3)", marginTop:10 }}>
                         Select a file to view Bloom&apos;s Taxonomy breakdown by cognitive level.
                       </p>
-                    ) : bloomsData ? (
+                    ) : bloomsData && bloomsBarsData ? (
                       <div style={{ marginTop:12 }}>
                         <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginBottom:10, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.5px" }}>
                           {bloomsData.fileName} · Avg: {bloomsData.avgScore}/{bloomsData.avgTotal} ({bloomsData.avgPercentage}%) · {bloomsData.attempts} attempt{bloomsData.attempts !== 1 ? "s" : ""}
                         </div>
-                        {LEVELS.map((lv) => {
-                          const baseCorrect = bloomsData.avgTotal > 0
-                            ? Math.max(0, (bloomsData.avgScore / bloomsData.avgTotal) * 3)
-                            : 0
-                          const variance = Math.random() * 2 - 1
-                          const randomCorrect = Math.max(0, Math.min(3, Math.round(baseCorrect + variance)))
-                          const totalPerLevel = 3
-                          const percentage = (randomCorrect / totalPerLevel) * 100
-                          return (
-                            <div key={lv.name} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-                              <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", width:76, flexShrink:0 }}>{lv.name}</div>
-                              <div style={{ flex:1, height:5, background:"rgba(255,255,255,0.07)", borderRadius:100, overflow:"hidden" }}>
-                                <div style={{ width:`${percentage}%`, height:"100%", background:lv.color, borderRadius:100, transition:"width 0.3s ease" }} />
-                              </div>
-                              <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", width:50, textAlign:"right" }}>
-                                {randomCorrect}/{totalPerLevel} · {Math.round(percentage)}%
+                        {bloomsBarsData.map((bar) => (
+                          <div key={bar.name} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                            <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", width:76, flexShrink:0 }}>{bar.name}</div>
+                            <div style={{ flex:1, height:5, background:"rgba(255,255,255,0.07)", borderRadius:100, overflow:"hidden" }}>
+                              <div style={{ width:`${bar.percentage}%`, height:"100%", background:bar.color, borderRadius:100, transition:"width 0.3s ease" }} />
+                            </div>
+                            <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", width:50, textAlign:"right" }}>
+                              {bar.randomCorrect}/{bar.totalPerLevel} · {Math.round(bar.percentage)}%
                               </div>
                             </div>
                           )

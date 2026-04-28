@@ -1,7 +1,16 @@
 "use client"
 import SmartFileSearch from "@/components/search/smart-file-search"
 import { useState, useEffect, useRef } from "react"
-import { getUserFiles, deleteMultipleFiles } from "@/lib/file-service"
+import { 
+  getUserFiles, 
+  deleteMultipleFiles, 
+  getUserFolders, 
+  createFolder, 
+  deleteFolder,
+  moveFileToFolder,
+  type StudyFile,
+  type Folder 
+} from "@/lib/file-service"
 import { useAuth } from "@/hooks/use-auth"
 import Sidebar from "@/components/dashboard/sidebar"
 import MobileHeaderNav from "@/components/dashboard/mobile-header-nav"
@@ -158,35 +167,41 @@ function AddButton({ onAddFile, onAddFolder }: { onAddFile: () => void; onAddFol
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function FileLibraryPage() {
   const { user, loading } = useAuth()
-  const [files, setFiles] = useState<any[]>([])
+  const [files, setFiles] = useState<StudyFile[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [filteredFiles, setFilteredFiles] = useState<any[]>([])
+  const [filteredFiles, setFilteredFiles] = useState<StudyFile[]>([])
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
-  const [folders, setFolders] = useState<any[]>([])
+  const [folders, setFolders] = useState<Folder[]>([])
   const [showCreateFolder, setShowCreateFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [showUploadTrigger, setShowUploadTrigger] = useState(false)
   const fileInputTriggerRef = useRef<HTMLButtonElement>(null)
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
 
   useEffect(() => {
     if (loading) return
     if (!user) { setIsLoading(false); return }
-    const loadFiles = async () => {
+    const loadData = async () => {
       try {
-        const userFiles = await getUserFiles()
+        const [userFiles, userFolders] = await Promise.all([
+          getUserFiles(),
+          getUserFolders(),
+        ])
         setFiles(userFiles)
         setFilteredFiles(userFiles)
+        setFolders(userFolders)
       } catch (error) {
-        console.error("Error loading files:", error)
+        console.error("Error loading files and folders:", error)
         setFiles([])
         setFilteredFiles([])
+        setFolders([])
       } finally {
         setIsLoading(false)
       }
     }
-    loadFiles()
+    loadData()
   }, [user, loading])
 
   // Trigger hidden FileUploadButton when Add File is selected
@@ -240,17 +255,63 @@ export default function FileLibraryPage() {
     setFilteredFiles(updatedFiles)
   }
 
-  const handleCreateFolder = () => {
+  const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return
-    const newFolder = {
-      id: `folder_${Date.now()}`,
-      name: newFolderName.trim(),
-      files: [],
-      createdAt: new Date().toISOString(),
+    try {
+      const newFolder = await createFolder(newFolderName.trim())
+      setFolders([...folders, newFolder].sort((a, b) => a.name.localeCompare(b.name)))
+      setNewFolderName("")
+      setShowCreateFolder(false)
+    } catch (error) {
+      console.error("Error creating folder:", error)
+      alert("Failed to create folder")
     }
-    setFolders([...folders, newFolder])
-    setNewFolderName("")
-    setShowCreateFolder(false)
+  }
+  
+  const handleDeleteFolder = async (folderId: string) => {
+    if (!confirm("Delete this folder? Files inside will be moved to the root.")) return
+    try {
+      await deleteFolder(folderId)
+      setFolders(folders.filter(f => f.id !== folderId))
+      // Refresh files to update their folderId
+      const userFiles = await getUserFiles()
+      setFiles(userFiles)
+      setFilteredFiles(userFiles)
+      setExpandedFolders(prev => {
+        const next = new Set(prev)
+        next.delete(folderId)
+        return next
+      })
+    } catch (error) {
+      console.error("Error deleting folder:", error)
+      alert("Failed to delete folder")
+    }
+  }
+
+  const handleDropOnFolder = async (folderId: string | null, fileId: string) => {
+    try {
+      await moveFileToFolder(fileId, folderId)
+      // Update local state
+      setFiles(prevFiles => prevFiles.map(f => 
+        f.id === fileId ? { ...f, folderId } : f
+      ))
+      setFilteredFiles(prevFiles => prevFiles.map(f => 
+        f.id === fileId ? { ...f, folderId } : f
+      ))
+    } catch (error) {
+      console.error("Error moving file:", error)
+      alert("Failed to move file")
+    }
+  }
+
+  // Get files that belong to a specific folder
+  const getFilesInFolderLocal = (folderId: string) => {
+    return filteredFiles.filter(f => f.folderId === folderId)
+  }
+
+  // Get files that are not in any folder (root level)
+  const getRootFiles = () => {
+    return filteredFiles.filter(f => !f.folderId)
   }
 
   const toggleFolderExpand = (folderId: string) => {
@@ -334,6 +395,18 @@ export default function FileLibraryPage() {
         .fl-file-card.selected {
           border-color: rgba(91,110,232,0.5);
           background: rgba(91,110,232,0.1);
+        }
+        
+        /* Drag styles */
+        [draggable="true"] {
+          cursor: grab;
+        }
+        [draggable="true"]:active {
+          cursor: grabbing;
+        }
+        .fl-folder-card.drag-over {
+          border-color: rgba(91,110,232,0.6) !important;
+          background: rgba(91,110,232,0.15) !important;
         }
 
         /* checkbox */
@@ -536,77 +609,146 @@ export default function FileLibraryPage() {
                       Folders ({folders.length})
                     </div>
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(130px, 1fr))", gap:12, marginBottom: expandedFolders.size > 0 ? 20 : 0 }}>
-                      {folders.map((folder) => (
-                        <div
-                          key={folder.id}
-                          className="fl-folder-card"
-                          onClick={() => toggleFolderExpand(folder.id)}
-                        >
-                          {/* 3D folder icon */}
-                          <FolderIcon size={52} />
+                      {folders.map((folder) => {
+                        const folderFileCount = getFilesInFolderLocal(folder.id).length
+                        const isDragOver = dragOverFolderId === folder.id
+                        return (
+                          <div
+                            key={folder.id}
+                            className="fl-folder-card"
+                            onClick={() => toggleFolderExpand(folder.id)}
+                            onDragOver={(e) => { e.preventDefault(); setDragOverFolderId(folder.id) }}
+                            onDragLeave={() => setDragOverFolderId(null)}
+                            onDrop={(e) => {
+                              e.preventDefault()
+                              setDragOverFolderId(null)
+                              const fileId = e.dataTransfer.getData("text/plain")
+                              if (fileId) handleDropOnFolder(folder.id, fileId)
+                            }}
+                            style={{
+                              borderColor: isDragOver ? "rgba(91,110,232,0.6)" : undefined,
+                              background: isDragOver ? "rgba(91,110,232,0.15)" : undefined,
+                            }}
+                          >
+                            {/* 3D folder icon */}
+                            <FolderIcon size={52} color={folder.color} />
 
-                          <div>
-                            <p style={{ fontSize:13, fontWeight:700, color:"#fff", margin:0, wordBreak:"break-word" }}>
-                              {folder.name}
-                            </p>
-                            <p style={{ fontSize:11, color:"rgba(255,255,255,0.35)", margin:"3px 0 0" }}>
-                              {folder.files.length} item{folder.files.length !== 1 ? "s" : ""}
-                            </p>
-                          </div>
+                            <div>
+                              <p style={{ fontSize:13, fontWeight:700, color:"#fff", margin:0, wordBreak:"break-word" }}>
+                                {folder.name}
+                              </p>
+                              <p style={{ fontSize:11, color:"rgba(255,255,255,0.35)", margin:"3px 0 0" }}>
+                                {folderFileCount} item{folderFileCount !== 1 ? "s" : ""}
+                              </p>
+                            </div>
 
-                          {/* Expand indicator */}
-                          <div style={{
-                            position:"absolute", bottom:8, right:10,
-                            fontSize:10, color:"rgba(255,255,255,0.2)",
-                            display:"flex", alignItems:"center", gap:3,
-                          }}>
-                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
-                              style={{ transform: expandedFolders.has(folder.id) ? "rotate(180deg)" : "rotate(0deg)", transition:"transform .2s" }}>
-                              <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                            {/* Delete button */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id) }}
+                              style={{
+                                position:"absolute", top:8, right:8,
+                                width:20, height:20, borderRadius:6,
+                                background:"rgba(255,107,107,0.15)",
+                                border:"1px solid rgba(255,107,107,0.3)",
+                                color:"#ff8f8f", fontSize:12,
+                                display:"flex", alignItems:"center", justifyContent:"center",
+                                cursor:"pointer", opacity:0.6, transition:"opacity .2s",
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.6")}
+                              title="Delete folder"
+                            >
+                              ×
+                            </button>
+
+                            {/* Expand indicator */}
+                            <div style={{
+                              position:"absolute", bottom:8, right:10,
+                              fontSize:10, color:"rgba(255,255,255,0.2)",
+                              display:"flex", alignItems:"center", gap:3,
+                            }}>
+                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+                                style={{ transform: expandedFolders.has(folder.id) ? "rotate(180deg)" : "rotate(0deg)", transition:"transform .2s" }}>
+                                <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
 
                     {/* Expanded folder contents */}
-                    {folders.map((folder) =>
-                      expandedFolders.has(folder.id) && folder.files.length > 0 ? (
+                    {folders.map((folder) => {
+                      const folderFiles = getFilesInFolderLocal(folder.id)
+                      return expandedFolders.has(folder.id) && folderFiles.length > 0 ? (
                         <div key={`expanded-${folder.id}`} style={{ marginBottom:20 }}>
                           <div style={{ fontSize:11, fontWeight:600, color:"rgba(255,255,255,0.4)", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
-                            <FolderIcon size={14} />
+                            <FolderIcon size={14} color={folder.color} />
                             {folder.name}
                           </div>
-                          <DarkFileGrid files={folder.files} selectedFiles={selectedFiles} onToggleSelection={handleToggleFile} />
+                          <DarkFileGrid 
+                            files={folderFiles} 
+                            selectedFiles={selectedFiles} 
+                            onToggleSelection={handleToggleFile}
+                            onDragStart={(fileId) => fileId}
+                          />
                         </div>
                       ) : null
-                    )}
+                    })}
                   </div>
                 )}
 
-                {/* ── Files section ── */}
-                {filteredFiles.length === 0 && folders.length === 0 ? (
-                  <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:300, gap:16, color:"rgba(255,255,255,0.3)" }}>
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.4">
-                      <rect x="8" y="8" width="32" height="32" rx="6" stroke="currentColor" strokeWidth="2" />
-                      <path d="M16 24h16M16 18h16M16 30h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                    <p style={{ fontSize:14 }}>No files yet. Hit the + button to upload!</p>
-                  </div>
-                ) : filteredFiles.length > 0 ? (
-                  <div>
-                    {folders.length > 0 && (
-                      <div style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.3)", textTransform:"uppercase", letterSpacing:"1.5px", marginBottom:14 }}>
-                        Files ({filteredFiles.length})
+                {/* ── Files section (root level) ── */}
+                {(() => {
+                  const rootFiles = getRootFiles()
+                  const totalFiles = filteredFiles.length
+                  
+                  if (totalFiles === 0 && folders.length === 0) {
+                    return (
+                      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:300, gap:16, color:"rgba(255,255,255,0.3)" }}>
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.4">
+                          <rect x="8" y="8" width="32" height="32" rx="6" stroke="currentColor" strokeWidth="2" />
+                          <path d="M16 24h16M16 18h16M16 30h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        <p style={{ fontSize:14 }}>No files yet. Hit the + button to upload!</p>
                       </div>
-                    )}
-                    <DarkFileGrid
-                      files={filteredFiles}
-                      selectedFiles={selectedFiles}
-                      onToggleSelection={handleToggleFile}
-                    />
-                  </div>
-                ) : null}
+                    )
+                  }
+                  
+                  if (rootFiles.length === 0) return null
+                  
+                  return (
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setDragOverFolderId("__root__") }}
+                      onDragLeave={() => setDragOverFolderId(null)}
+                      onDrop={(e) => {
+                        e.preventDefault()
+                        setDragOverFolderId(null)
+                        const fileId = e.dataTransfer.getData("text/plain")
+                        if (fileId) handleDropOnFolder(null, fileId)
+                      }}
+                      style={{
+                        padding: dragOverFolderId === "__root__" ? 12 : 0,
+                        borderRadius: 12,
+                        border: dragOverFolderId === "__root__" ? "2px dashed rgba(91,110,232,0.4)" : "none",
+                        background: dragOverFolderId === "__root__" ? "rgba(91,110,232,0.05)" : "transparent",
+                        transition: "all .2s",
+                      }}
+                    >
+                      {folders.length > 0 && (
+                        <div style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.3)", textTransform:"uppercase", letterSpacing:"1.5px", marginBottom:14 }}>
+                          Files ({rootFiles.length})
+                        </div>
+                      )}
+                      <DarkFileGrid
+                        files={rootFiles}
+                        selectedFiles={selectedFiles}
+                        onToggleSelection={handleToggleFile}
+                        onDragStart={(fileId) => fileId}
+                      />
+                    </div>
+                  )
+                })()}
 
               </>
             )}
@@ -622,10 +764,12 @@ function DarkFileGrid({
   files,
   selectedFiles,
   onToggleSelection,
+  onDragStart,
 }: {
-  files: any[]
+  files: StudyFile[]
   selectedFiles: Set<string>
   onToggleSelection: (id: string) => void
+  onDragStart?: (fileId: string) => void
 }) {
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 B"
@@ -650,11 +794,20 @@ function DarkFileGrid({
         const selected = selectedFiles.has(file.id)
         const accent = getFileAccent(file.fileName)
         return (
-          <div key={file.id} style={{ position:"relative" }}>
+          <div 
+            key={file.id} 
+            style={{ position:"relative" }}
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData("text/plain", file.id)
+              e.dataTransfer.effectAllowed = "move"
+              onDragStart?.(file.id)
+            }}
+          >
             <a href={`/file-library/${file.id}`} style={{ textDecoration:"none" }}>
               <div
                 className={`fl-file-card${selected ? " selected" : ""}`}
-                style={{ borderTopColor: selected ? "rgba(91,110,232,0.5)" : `${accent}30` }}
+                style={{ borderTopColor: selected ? "rgba(91,110,232,0.5)" : `${accent}30`, cursor:"grab" }}
               >
                 {/* File icon with type accent */}
                 <div style={{

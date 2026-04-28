@@ -299,26 +299,33 @@ export default function Sidebar() {
 
         {/* ── User + logout ── */}
         <div style={{ marginTop: "auto", padding: "16px 8px", flexShrink: 0 }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
-            borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)", marginBottom: 8,
-          }}>
-            {/* Avatar with real initial */}
+          <Link href="/profile" style={{ textDecoration: "none" }}>
             <div style={{
-              width: 32, height: 32, borderRadius: "50%",
-              background: "linear-gradient(135deg,#5B6EE8,#7b5ea7)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 800, fontSize: 13, color: "#fff", flexShrink: 0,
+              display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+              borderRadius: 10, 
+              background: pathname === "/profile" ? "rgba(91,110,232,0.18)" : "rgba(255,255,255,0.05)", 
+              border: pathname === "/profile" ? "1px solid rgba(91,110,232,0.25)" : "1px solid rgba(255,255,255,0.07)", 
+              marginBottom: 8,
+              cursor: "pointer",
+              transition: "all .2s",
             }}>
-              {avatarInitial}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {displayName}
+              {/* Avatar with real initial */}
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "linear-gradient(135deg,#5B6EE8,#7b5ea7)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 800, fontSize: 13, color: "#fff", flexShrink: 0,
+              }}>
+                {avatarInitial}
               </div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{roleLabel}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {displayName}
+                </div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{roleLabel}</div>
+              </div>
             </div>
-          </div>
+          </Link>
           <button
             onClick={handleLogout}
             suppressHydrationWarning

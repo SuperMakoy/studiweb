@@ -5,6 +5,19 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
+/**
+ * DEMO-ONLY AUTHENTICATION
+ * 
+ * WARNING: This is NOT secure for production use!
+ * - Credentials are hardcoded and exposed in client-side code
+ * - sessionStorage is not a secure authentication mechanism
+ * - No password hashing, no JWT tokens, no server-side validation
+ * 
+ * For production, implement proper authentication using:
+ * - Firebase Auth, Supabase Auth, or similar
+ * - Server-side session management with HTTP-only cookies
+ * - Proper role-based access control (RBAC)
+ */
 const EVALUATOR_CREDENTIALS = {
   email: "evaluator@studi.com",
   password: "evaluator123",

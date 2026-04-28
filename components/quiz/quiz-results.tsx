@@ -47,11 +47,11 @@ export default function QuizResults({
   useEffect(() => {
     if (fileId && !hasSaved.current) {
       hasSaved.current = true
-      saveQuizResult(fileId, fileName, score, totalQuestions, timeElapsed, difficulty, points).catch(
+      saveQuizResult(fileId, fileName, score, totalQuestions, timeElapsed, difficulty, points, cognitiveLevelStats).catch(
         (err) => console.error("Failed to save quiz result:", err)
       )
     }
-  }, [fileId, fileName, score, totalQuestions, timeElapsed, difficulty, points])
+  }, [fileId, fileName, score, totalQuestions, timeElapsed, difficulty, points, cognitiveLevelStats])
 
   const getGrade = () => {
     if (percentage >= 90) return { label: "Excellent!", color: "#58d68d", emoji: "🏆" }

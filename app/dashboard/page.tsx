@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { getUserFiles, getQuizHistory } from "@/lib/file-service"
+import { getUserFiles, getQuizHistory, getFileCognitiveStatsByName, type CognitiveLevelStatsRecord, type StudyFile, type QuizHistory } from "@/lib/file-service"
 import { useAuth } from "@/hooks/use-auth"
 import Sidebar from "@/components/dashboard/sidebar"
 import MobileHeaderNav from "@/components/dashboard/mobile-header-nav"
@@ -138,15 +138,24 @@ function EmptyState({ hasFiles }: { hasFiles: boolean }) {
 export default function DashboardPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
-  const [files, setFiles] = useState<any[]>([])
-  const [quizzes, setQuizzes] = useState<any[]>([])
+  const [files, setFiles] = useState<StudyFile[]>([])
+  const [quizzes, setQuizzes] = useState<QuizHistory[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<StudyFile[]>([])
   const [showSearchDropdown, setShowSearchDropdown] = useState(false)
   const [selectedBloomsFileName, setSelectedBloomsFileName] = useState<string | null>(null)
-  const [bloomsData, setBloomsData] = useState<any>(null)
+  const [bloomsData, setBloomsData] = useState<{
+    fileName: string
+    attempts: number
+    avgScore: number
+    avgTotal: number
+    avgPoints: number
+    avgPercentage: number
+    cognitiveStats: CognitiveLevelStatsRecord | null
+  } | null>(null)
+  const [bloomsLoading, setBloomsLoading] = useState(false)
 
   const getGroupedQuizzesByFile = () => {
     const grouped: Record<string, any[]> = {}
@@ -185,12 +194,16 @@ export default function DashboardPage() {
     router.push(`/file-library/${fileId}`)
   }
 
-  const calculateBloomsStats = (fileName: string) => {
+  const calculateBloomsStats = async (fileName: string) => {
     const fileQuizzes = quizzes.filter(q => q.fileName === fileName)
     if (fileQuizzes.length === 0) return null
     const avgScore = fileQuizzes.reduce((sum, q) => sum + q.score, 0) / fileQuizzes.length
     const avgTotal = Math.round(fileQuizzes.reduce((sum, q) => sum + q.totalQuestions, 0) / fileQuizzes.length)
     const avgPoints = Math.round(fileQuizzes.reduce((sum, q) => sum + (q.points || 0), 0) / fileQuizzes.length)
+    
+    // Fetch real cognitive stats from Firestore
+    const cognitiveStats = await getFileCognitiveStatsByName(fileName)
+    
     return {
       fileName,
       attempts: fileQuizzes.length,
@@ -198,12 +211,22 @@ export default function DashboardPage() {
       avgTotal,
       avgPoints,
       avgPercentage: avgTotal > 0 ? Math.round((avgScore / avgTotal) * 100) : 0,
+      cognitiveStats,
     }
   }
 
-  const handleBloomsFileSelect = (fileName: string) => {
+  const handleBloomsFileSelect = async (fileName: string) => {
     setSelectedBloomsFileName(fileName)
-    setBloomsData(calculateBloomsStats(fileName))
+    setBloomsLoading(true)
+    try {
+      const stats = await calculateBloomsStats(fileName)
+      setBloomsData(stats)
+    } catch (error) {
+      console.error("Failed to load Bloom's stats:", error)
+      setBloomsData(null)
+    } finally {
+      setBloomsLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -433,9 +456,15 @@ export default function DashboardPage() {
               {/* Quiz history */}
               {hasQuizzes && (
                 <>
-                  <div className="db-fadeup db-fadeup-3" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-                    <div style={{ fontFamily:"'Syne', sans-serif", fontSize:15, fontWeight:700, color:"#fff" }}>Today&apos;s Quizzes</div>
-                  </div>
+  <div className="db-fadeup db-fadeup-3" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+  <div style={{ fontFamily:"'Syne', sans-serif", fontSize:15, fontWeight:700, color:"#fff" }}>Today&apos;s Quizzes</div>
+  <Link href="/quiz-history" style={{ fontSize:12, color:"#7f9fff", textDecoration:"none", opacity:.8, display:"flex", alignItems:"center", gap:4 }}>
+    View All History
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <path d="M3 1.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  </Link>
+  </div>
                   <div className="db-fadeup db-fadeup-3" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(145px, 1fr))", gap:10, marginBottom:24 }}>
                     {quizzes.map((q) => {
                       const pct = Math.round((q.score / q.totalQuestions) * 100)
@@ -449,7 +478,7 @@ export default function DashboardPage() {
                           <div style={{ fontFamily:"'Syne', sans-serif", fontSize:20, fontWeight:800, color:"#fff", marginBottom:2 }}>{q.score}/{q.totalQuestions}</div>
                           <div style={{ fontSize:12, color:"rgba(255,255,255,0.4)", marginBottom:8 }}>{pct}% · {q.points ?? 0} pts</div>
                           <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
-                            {q.displayName || q.fileName}
+                            {q.fileName}
                           </div>
                           <DiffBadge diff={q.difficulty} />
                         </div>
@@ -485,34 +514,51 @@ export default function DashboardPage() {
                       <p style={{ fontSize:12, color:"rgba(255,255,255,0.3)", marginTop:10 }}>
                         Select a file to view Bloom&apos;s Taxonomy breakdown by cognitive level.
                       </p>
+                    ) : bloomsLoading ? (
+                      <div style={{ marginTop:12, textAlign:"center", padding:20 }}>
+                        <div style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }}>Loading cognitive data...</div>
+                      </div>
                     ) : bloomsData ? (
                       <div style={{ marginTop:12 }}>
                         <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginBottom:10, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.5px" }}>
-                          {bloomsData.fileName} · Avg: {bloomsData.avgScore}/{bloomsData.avgTotal} ({bloomsData.avgPercentage}%) · {bloomsData.attempts} attempt{bloomsData.attempts !== 1 ? "s" : ""}
+                          {bloomsData.fileName} · Avg: {bloomsData.avgScore}/{bloomsData.avgTotal} ({bloomsData.avgPercentage}%) · {bloomsData.attempts} attempt{bloomsData.attempts !== 1 ? "s" : ""} today
                         </div>
-                        {LEVELS.map((lv) => {
-                          const baseCorrect = bloomsData.avgTotal > 0
-                            ? Math.max(0, (bloomsData.avgScore / bloomsData.avgTotal) * 3)
-                            : 0
-                          const variance = Math.random() * 2 - 1
-                          const randomCorrect = Math.max(0, Math.min(3, Math.round(baseCorrect + variance)))
-                          const totalPerLevel = 3
-                          const percentage = (randomCorrect / totalPerLevel) * 100
-                          return (
-                            <div key={lv.name} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-                              <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", width:76, flexShrink:0 }}>{lv.name}</div>
-                              <div style={{ flex:1, height:5, background:"rgba(255,255,255,0.07)", borderRadius:100, overflow:"hidden" }}>
-                                <div style={{ width:`${percentage}%`, height:"100%", background:lv.color, borderRadius:100, transition:"width 0.3s ease" }} />
-                              </div>
-                              <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", width:50, textAlign:"right" }}>
-                                {randomCorrect}/{totalPerLevel} · {Math.round(percentage)}%
-                              </div>
+                        {bloomsData.cognitiveStats ? (
+                          <>
+                            {LEVELS.map((lv) => {
+                              const stats = bloomsData.cognitiveStats![lv.name as keyof typeof bloomsData.cognitiveStats]
+                              const total = stats?.total || 0
+                              const correct = stats?.correct || 0
+                              const percentage = total > 0 ? (correct / total) * 100 : 0
+                              
+                              // Skip levels with no questions
+                              if (total === 0) return null
+                              
+                              return (
+                                <div key={lv.name} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                                  <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", width:76, flexShrink:0 }}>{lv.name}</div>
+                                  <div style={{ flex:1, height:5, background:"rgba(255,255,255,0.07)", borderRadius:100, overflow:"hidden" }}>
+                                    <div style={{ width:`${percentage}%`, height:"100%", background:lv.color, borderRadius:100, transition:"width 0.3s ease" }} />
+                                  </div>
+                                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", width:50, textAlign:"right" }}>
+                                    {correct}/{total} · {Math.round(percentage)}%
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            <div style={{ marginTop:12, padding:"10px 12px", background:"rgba(81,207,102,0.08)", borderLeft:"2px solid rgba(81,207,102,0.3)", borderRadius:6, fontSize:11, color:"rgba(255,255,255,0.5)" }}>
+                              Data resets daily. Complete more quizzes to see detailed breakdown across all cognitive levels.
                             </div>
-                          )
-                        })}
-                        <div style={{ marginTop:12, padding:"10px 12px", background:"rgba(91,110,232,0.08)", borderLeft:"2px solid rgba(91,110,232,0.3)", borderRadius:6, fontSize:11, color:"rgba(255,255,255,0.5)" }}>
-                          💡 Detailed cognitive level data will be available as you complete more quizzes.
-                        </div>
+                          </>
+                        ) : (
+                          <div style={{ marginTop:12, padding:"16px", background:"rgba(255,255,255,0.03)", borderRadius:10, textAlign:"center" }}>
+                            <div style={{ fontSize:24, marginBottom:8 }}>📊</div>
+                            <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>No cognitive data yet</div>
+                            <div style={{ fontSize:11, color:"rgba(255,255,255,0.3)" }}>
+                              Take a quiz on this file today to see your Bloom&apos;s Taxonomy breakdown
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : null}
                   </div>

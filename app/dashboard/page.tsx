@@ -478,7 +478,7 @@ export default function DashboardPage() {
                           <div style={{ fontFamily:"'Syne', sans-serif", fontSize:20, fontWeight:800, color:"#fff", marginBottom:2 }}>{q.score}/{q.totalQuestions}</div>
                           <div style={{ fontSize:12, color:"rgba(255,255,255,0.4)", marginBottom:8 }}>{pct}% · {q.points ?? 0} pts</div>
                           <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
-                            {q.displayName || q.fileName}
+                            {q.fileName}
                           </div>
                           <DiffBadge diff={q.difficulty} />
                         </div>

@@ -53,7 +53,7 @@ export interface QuizHistory {
   totalQuestions: number
   timeElapsed: string
   difficulty: "easy" | "moderate" | "hard"
-  points?: number // Added points field
+  points: number // Points earned (always present, defaults to 0)
   cognitiveLevelStats?: CognitiveLevelStatsRecord // Bloom's Taxonomy breakdown per quiz
   completedAt: Date
 }

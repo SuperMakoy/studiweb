@@ -65,6 +65,7 @@ export default function QuizGame({
   const [totalPoints, setTotalPoints] = useState(0)
   const [currentStreak, setCurrentStreak] = useState(0)
   const [answerHistory, setAnswerHistory] = useState<AnswerRecord[]>([])
+  const [finalAnswerHistory, setFinalAnswerHistory] = useState<AnswerRecord[]>([]) // Preserved for results
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackIsCorrect, setFeedbackIsCorrect] = useState(false)
@@ -79,6 +80,8 @@ export default function QuizGame({
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           setFinalTimeElapsed(totalTimeSeconds - prev)
+          // When time runs out, save the current answer history (may be incomplete)
+          setFinalAnswerHistory(answerHistory)
           setShowResults(true)
           return 0
         }
@@ -86,7 +89,7 @@ export default function QuizGame({
       })
     }, 1000)
     return () => clearInterval(timer)
-  }, [showResults, totalTimeSeconds])
+  }, [showResults, totalTimeSeconds, answerHistory])
 
   useEffect(() => {
     setQuestionStartTime(Date.now())
@@ -140,16 +143,21 @@ export default function QuizGame({
 
     // After feedback is shown, proceed to next question
     const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000)
-    setAnswerHistory([
-      ...answerHistory,
-      { questionId: currentQuestion.id, isCorrect, timeSpent, cognitiveLevel: currentQuestion.cognitiveLevel },
-    ])
+    const newRecord: AnswerRecord = { 
+      questionId: currentQuestion.id, 
+      isCorrect, 
+      timeSpent, 
+      cognitiveLevel: currentQuestion.cognitiveLevel 
+    }
+    const updatedHistory = [...answerHistory, newRecord]
+    setAnswerHistory(updatedHistory)
 
     const finalPoints = calculateQuestionPoints(isCorrect, timeSpent)
 
     if (isLastQuestion) {
       setFinalTimeElapsed(totalTimeSeconds - timeRemaining)
       setTotalPoints(finalPoints)
+      setFinalAnswerHistory(updatedHistory) // Save complete history before showing results
       setShowResults(true)
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
@@ -169,18 +177,11 @@ export default function QuizGame({
   }
 
   const calculateScore = () => {
-    let correctCount = 0
-    quiz.questions.forEach((question) => {
-      const userAnswers = selectedAnswers[question.id] || []
-      const isCorrect =
-        userAnswers.length === question.correctAnswers.length &&
-        userAnswers.every((a) => question.correctAnswers.includes(a))
-      if (isCorrect) correctCount++
-    })
-    return correctCount
+    // Use finalAnswerHistory which has all answers including the last question
+    return finalAnswerHistory.filter(record => record.isCorrect).length
   }
 
-  const calculateCognitiveLevelStats = (): Record<CognitiveLevel, CognitiveLevelStats> => {
+  const calculateCognitiveLevelStats = (history: AnswerRecord[]): Record<CognitiveLevel, CognitiveLevelStats> => {
     const stats: Record<CognitiveLevel, CognitiveLevelStats> = {
       Remember: { total: 0, correct: 0 },
       Understand: { total: 0, correct: 0 },
@@ -189,15 +190,15 @@ export default function QuizGame({
       Evaluate: { total: 0, correct: 0 },
       Create: { total: 0, correct: 0 },
     }
-    quiz.questions.forEach((question) => {
-      const level = question.cognitiveLevel || "Remember"
+    
+    // Use the passed history which includes all answers including the last one
+    // (answerHistory state may not be updated yet due to React batching)
+    history.forEach((record) => {
+      const level = record.cognitiveLevel || "Remember"
       stats[level].total++
-      const userAnswers = selectedAnswers[question.id] || []
-      const isCorrect =
-        userAnswers.length === question.correctAnswers.length &&
-        userAnswers.every((a) => question.correctAnswers.includes(a))
-      if (isCorrect) stats[level].correct++
+      if (record.isCorrect) stats[level].correct++
     })
+    
     return stats
   }
 
@@ -223,7 +224,7 @@ export default function QuizGame({
         fileId={fileId}
         difficulty={difficulty}
         points={totalPoints}
-        cognitiveLevelStats={calculateCognitiveLevelStats()}
+        cognitiveLevelStats={calculateCognitiveLevelStats(finalAnswerHistory)}
       />
     )
   }

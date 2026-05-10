@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"
-import { auth, db } from "@/lib/firebase"
-import { setDoc, doc } from "firebase/firestore"
+import { auth } from "@/lib/firebase"
+import { createUserProfile, type UserRole } from "@/lib/auth-service"
 import SpinWheel from "@/components/landing/spin-wheel"
 
 // ─── tiny star helper ─────────────────────────────────────────────────────────
@@ -23,7 +23,7 @@ export default function LandingPage() {
   const [tab, setTab] = useState<"login" | "signup">("login")
   const [loginData, setLoginData] = useState({ email: "", password: "" })
   const [signupData, setSignupData] = useState({
-    fullName: "", email: "", password: "", confirmPassword: "",
+    fullName: "", email: "", password: "", confirmPassword: "", role: "student" as UserRole,
   })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -35,7 +35,8 @@ export default function LandingPage() {
     setError("")
     setLoading(true)
     try {
-      await signInWithEmailAndPassword(auth, loginData.email, loginData.password)
+      const cred = await signInWithEmailAndPassword(auth, loginData.email, loginData.password)
+      // Redirect will be handled by middleware or a dashboard page that checks user role
       router.push("/dashboard")
     } catch (err: any) {
       setError(err.code === "auth/invalid-credential" ? "Invalid email or password" : err.message)
@@ -52,11 +53,15 @@ export default function LandingPage() {
     setLoading(true)
     try {
       const cred = await createUserWithEmailAndPassword(auth, signupData.email, signupData.password)
-      await setDoc(doc(db, "users", cred.user.uid), {
-        uid: cred.user.uid, fullName: signupData.fullName,
-        email: signupData.email, createdAt: new Date(),
-      })
-      router.push("/dashboard")
+      await createUserProfile(cred.user.uid, signupData.fullName, signupData.email, signupData.role)
+      // Route based on role
+      if (signupData.role === "teacher") {
+        router.push("/teacher/dashboard")
+      } else if (signupData.role === "evaluator") {
+        router.push("/evaluator/dashboard")
+      } else {
+        router.push("/dashboard")
+      }
     } catch (err: any) {
       setError(err.code === "auth/email-already-in-use" ? "Email already in use" : err.message)
     } finally {
@@ -371,6 +376,16 @@ export default function LandingPage() {
                   onChange={e => setSignupData(p => ({ ...p, confirmPassword: e.target.value }))}
                   required
                 />
+                <label className="sp-lbl">I am a...</label>
+                <select
+                  className="sp-inp" style={{ appearance: "auto", cursor: "pointer" }}
+                  value={signupData.role}
+                  onChange={e => setSignupData(p => ({ ...p, role: e.target.value as UserRole }))}
+                >
+                  <option value="student">Student</option>
+                  <option value="teacher">Teacher</option>
+                  <option value="evaluator">Evaluator</option>
+                </select>
                 <button className="sp-btn" type="submit" disabled={loading}>
                   {loading ? "Creating account…" : "Create account →"}
                 </button>

@@ -38,7 +38,7 @@ export async function uploadTeacherFile(file: File, folderId?: string): Promise<
       fileSize: file.size,
       fileType: "teacher",
       fileData: fileData,
-      folderIds: folderIds || [],
+      folderId: folderId || null,
       uploadedAt: Timestamp.now(),
       lastModified: Timestamp.now(),
     })
@@ -83,7 +83,7 @@ export async function getTeacherFiles(): Promise<TeacherFile[]> {
         fileSize: data.fileSize,
         fileType: "teacher" as const,
         fileData: data.fileData,
-        folderIds: data.folderIds || [],
+        folderId: data.folderId || null,
         uploadedAt: data.uploadedAt?.toDate() || new Date(),
         lastModified: data.lastModified?.toDate() || new Date(),
       })

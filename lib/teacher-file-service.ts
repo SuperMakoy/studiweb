@@ -23,7 +23,7 @@ export interface TeacherFile extends StudyFile {
  * Upload a file for teacher use
  * Stored in users/{uid}/teacherFiles collection
  */
-export async function uploadTeacherFile(file: File, folderIds: string[] = []): Promise<TeacherFile> {
+export async function uploadTeacherFile(file: File, folderId?: string): Promise<TeacherFile> {
   const user = auth.currentUser
   if (!user) throw new Error("User not authenticated")
 
@@ -51,7 +51,7 @@ export async function uploadTeacherFile(file: File, folderIds: string[] = []): P
       fileSize: file.size,
       fileType: "teacher",
       fileData: fileData,
-      folderIds: folderIds || [],
+      folderId: folderId || null,
       uploadedAt: new Date(),
       lastModified: new Date(),
     }
@@ -118,7 +118,7 @@ export async function getTeacherFile(fileId: string): Promise<TeacherFile | null
       fileSize: data.fileSize,
       fileType: "teacher" as const,
       fileData: data.fileData,
-      folderIds: data.folderIds || [],
+      folderId: data.folderId || null,
       uploadedAt: data.uploadedAt?.toDate() || new Date(),
       lastModified: data.lastModified?.toDate() || new Date(),
     }

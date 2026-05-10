@@ -224,13 +224,13 @@ export default function MyQuizzesPage() {
                               return (
                                 <div
                                   key={level}
+                                  title={`${level}: ${count} question${count !== 1 ? "s" : ""}`}
                                   style={{
                                     flex: 1,
                                     height: 24,
                                     background: colors[level],
                                     borderRadius: 2,
                                     opacity: percentage > 0 ? 1 : 0.2,
-                                    title: `${level}: ${count} question${count !== 1 ? "s" : ""}`,
                                   }}
                                 />
                               )

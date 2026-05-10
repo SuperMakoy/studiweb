@@ -77,6 +77,20 @@ export default function TeacherProfilePage() {
           {/* Content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
             <div className="tc-fadeup" style={{ maxWidth: 600, margin: "0 auto" }}>
+              {/* Prototype Banner */}
+              <div style={{
+                background: "linear-gradient(90deg, rgba(255,212,59,0.15), rgba(255,212,59,0.05))",
+                border: "1px solid rgba(255,212,59,0.3)",
+                borderRadius: 8,
+                padding: "8px 14px",
+                display: "flex", alignItems: "center", gap: 8,
+                marginBottom: 16,
+              }}>
+                <span style={{ fontSize: 16 }}>⚠️</span>
+                <span style={{ fontSize: 12, color: "#FFD43B", fontWeight: 500 }}>
+                  STATIC PROTOTYPE - This section demonstrates the Teacher Portal UI. Backend functionality is not connected.
+                </span>
+              </div>
 
               {/* Profile Card */}
               <div style={{

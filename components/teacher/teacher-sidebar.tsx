@@ -9,7 +9,7 @@ export default function TeacherSidebar() {
   const [quizzesOpen, setQuizzesOpen] = useState(true)
 
   // Static mock data for prototype
-  const stats = { total: 12, published: 8, drafts: 4 }
+  const stats = { total: 12, published: 8, drafts: 4, files: 6 }
 
   const handleLogout = () => {
     sessionStorage.removeItem("isTeacher")
@@ -18,49 +18,49 @@ export default function TeacherSidebar() {
   }
 
   const isActive = (path: string) => pathname === path
-  const isDashActive =
-    pathname === "/teacher/dashboard" ||
-    pathname.startsWith("/teacher/quizzes") ||
-    pathname.startsWith("/teacher/published") ||
-    pathname.startsWith("/teacher/drafts")
+  const isQuizzesActive = pathname.startsWith("/teacher/quizzes") || pathname === "/teacher/published" || pathname === "/teacher/drafts"
 
-  const subItems = [
+  const quizSubItems = [
+    { label: "All Quizzes", path: "/teacher/quizzes", count: stats.total, countColor: "rgba(125,206,160,0.8)", dot: "#7dcea0" },
+    { label: "Published", path: "/teacher/published", count: stats.published, countColor: "#51CF66", dot: "#51CF66" },
+    { label: "Drafts", path: "/teacher/drafts", count: stats.drafts, countColor: "#FFD43B", dot: "#FFD43B" },
+  ]
+
+  const mainItems = [
     {
-      label: "All Quizzes",
-      path: "/teacher/quizzes",
-      count: stats.total,
-      countColor: "rgba(125,206,160,0.8)",
-      dot: "#7dcea0",
+      label: "Dashboard",
+      path: "/teacher/dashboard",
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1.5 7.5l5.5-5.5 5.5 5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3 6v5.5h3V9h2v2.5h3V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
     },
     {
-      label: "Published",
-      path: "/teacher/published",
-      count: stats.published,
-      countColor: "#51CF66",
-      dot: "#51CF66",
+      label: "File Library",
+      path: "/teacher/library",
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 4.5V11a1 1 0 001 1h8a1 1 0 001-1V5.5a1 1 0 00-1-1H7L5.5 3H3a1 1 0 00-1 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+      badge: stats.files,
     },
     {
-      label: "Drafts",
-      path: "/teacher/drafts",
-      count: stats.drafts,
-      countColor: "#FFD43B",
-      dot: "#FFD43B",
+      label: "Create Quiz",
+      path: "/teacher/create-quiz",
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.3" />
+          <path d="M7 4.5v5M4.5 7h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        </svg>
+      ),
+      highlight: true,
     },
   ]
 
   const toolItems = [
-    {
-      label: "Students",
-      path: "/teacher/students",
-      icon: (
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-          <circle cx="4.5" cy="4" r="2" stroke="currentColor" strokeWidth="1.2" />
-          <circle cx="8.5" cy="4" r="2" stroke="currentColor" strokeWidth="1.2" />
-          <path d="M1 11c0-2 1.5-3.5 3.5-3.5s3.5 1.5 3.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M8.5 7.5c2 0 3.5 1.5 3.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      ),
-    },
     {
       label: "Analytics",
       path: "/teacher/analytics",
@@ -91,7 +91,7 @@ export default function TeacherSidebar() {
         .tc-sidebar { font-family: 'DM Sans', sans-serif; }
         .tc-nav-item {
           display: flex; align-items: center; gap: 8px;
-          padding: 6px 10px; border-radius: 8px;
+          padding: 8px 10px; border-radius: 8px;
           font-size: 13px; font-weight: 500;
           cursor: pointer; transition: all .15s;
           color: rgba(255,255,255,0.45);
@@ -104,6 +104,14 @@ export default function TeacherSidebar() {
           background: rgba(88,214,141,0.18);
           border-color: rgba(88,214,141,0.25);
           color: #7dcea0;
+        }
+        .tc-nav-item.highlight {
+          background: rgba(88,214,141,0.12);
+          border-color: rgba(88,214,141,0.25);
+          color: #58d68d;
+        }
+        .tc-nav-item.highlight:hover {
+          background: rgba(88,214,141,0.2);
         }
         .tc-section-label {
           font-size: 10px; font-weight: 700;
@@ -122,7 +130,6 @@ export default function TeacherSidebar() {
         }
         .tc-logout:hover { background: rgba(255,107,107,0.08); color: rgba(255,107,107,0.9); }
 
-        /* subtree */
         .tc-subtree {
           margin-left: 10px;
           border-left: 1px solid rgba(255,255,255,0.07);
@@ -187,27 +194,47 @@ export default function TeacherSidebar() {
         {/* Nav */}
         <div style={{ flex: 1, overflowY: "auto", padding: "8px 8px 0" }}>
 
-          {/* LIBRARY section */}
-          <div className="tc-section-label" style={{ marginTop: 12 }}>Library</div>
+          {/* MAIN section */}
+          <div className="tc-section-label" style={{ marginTop: 8 }}>Main</div>
 
-          {/* Dashboard parent with collapse toggle */}
+          {mainItems.map(item => (
+            <button
+              key={item.path}
+              className={`tc-nav-item${isActive(item.path) ? " active" : ""}${item.highlight ? " highlight" : ""}`}
+              onClick={() => router.push(item.path)}
+            >
+              <span style={{ flexShrink: 0, opacity: isActive(item.path) ? 1 : 0.6 }}>{item.icon}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {item.badge && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700,
+                  color: "rgba(255,255,255,0.4)",
+                  background: "rgba(255,255,255,0.08)",
+                  borderRadius: 100, padding: "1px 6px",
+                }}>
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          ))}
+
+          {/* QUIZZES section */}
+          <div className="tc-section-label">Quizzes</div>
+
+          {/* Quizzes parent with collapse toggle */}
           <div>
             <button
-              className={`tc-nav-item${isDashActive ? " active" : ""}`}
-              onClick={() => {
-                router.push("/teacher/dashboard")
-                setQuizzesOpen(v => !v)
-              }}
+              className={`tc-nav-item${isQuizzesActive ? " active" : ""}`}
+              onClick={() => setQuizzesOpen(v => !v)}
               style={{ justifyContent: "space-between" }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                  <path d="M1 7l5.5-5.5L12 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M2.5 5.5V11h3V8h2v3h3V5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ opacity: isQuizzesActive ? 1 : 0.6 }}>
+                  <rect x="2" y="2" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M5 5h4M5 7h4M5 9h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                <span>Dashboard</span>
+                <span>My Quizzes</span>
               </div>
-              {/* Chevron */}
               <svg
                 width="10" height="10" viewBox="0 0 10 10" fill="none"
                 style={{ transform: quizzesOpen ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform .2s ease", opacity: 0.4, flexShrink: 0 }}
@@ -216,24 +243,20 @@ export default function TeacherSidebar() {
               </svg>
             </button>
 
-            {/* Subtree */}
             {quizzesOpen && (
               <div className="tc-subtree">
-                {subItems.map(item => (
+                {quizSubItems.map(item => (
                   <button
                     key={item.path}
-                    suppressHydrationWarning
                     className={`tc-sub-item${isActive(item.path) ? " active" : ""}`}
                     onClick={() => router.push(item.path)}
                   >
-                    {/* Status dot */}
                     <div style={{
                       width: 5, height: 5, borderRadius: "50%", flexShrink: 0,
                       background: isActive(item.path) ? item.dot : "rgba(255,255,255,0.2)",
                       transition: "background .15s",
                     }} />
                     <span style={{ flex: 1 }}>{item.label}</span>
-                    {/* Count badge */}
                     <span style={{
                       fontSize: 10, fontWeight: 700,
                       color: isActive(item.path) ? item.countColor : "rgba(255,255,255,0.25)",
@@ -304,7 +327,7 @@ export default function TeacherSidebar() {
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)" }}>Quiz Creator</div>
             </div>
           </div>
-          <button suppressHydrationWarning className="tc-logout" onClick={handleLogout}>
+          <button className="tc-logout" onClick={handleLogout}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
               <path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h3M8.5 9l3-2.5-3-2.5M11.5 6.5H5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>

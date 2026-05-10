@@ -95,6 +95,20 @@ export default function TeacherAnalyticsPage() {
           {/* Content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
             <div style={{ maxWidth: 900, margin: "0 auto" }}>
+              {/* Prototype Banner */}
+              <div style={{
+                background: "linear-gradient(90deg, rgba(255,212,59,0.15), rgba(255,212,59,0.05))",
+                border: "1px solid rgba(255,212,59,0.3)",
+                borderRadius: 8,
+                padding: "8px 14px",
+                display: "flex", alignItems: "center", gap: 8,
+                marginBottom: 16,
+              }}>
+                <span style={{ fontSize: 16 }}>⚠️</span>
+                <span style={{ fontSize: 12, color: "#FFD43B", fontWeight: 500 }}>
+                  STATIC PROTOTYPE - This section demonstrates the Teacher Portal UI. Backend functionality is not connected.
+                </span>
+              </div>
 
               {/* Header */}
               <div className="tc-fadeup tc-fadeup-1" style={{ marginBottom: 28 }}>

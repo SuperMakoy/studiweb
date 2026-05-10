@@ -226,6 +226,22 @@ export default function TeacherLoginPage() {
           </div>
         </nav>
 
+        {/* Prototype Banner */}
+        <div
+          style={{
+            background: "linear-gradient(90deg, rgba(255,212,59,0.15), rgba(255,212,59,0.05))",
+            borderBottom: "1px solid rgba(255,212,59,0.3)",
+            padding: "8px 40px",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            position: "relative", zIndex: 10,
+          }}
+        >
+          <span style={{ fontSize: 14 }}>⚠️</span>
+          <span style={{ fontSize: 12, color: "#FFD43B", fontWeight: 500 }}>
+            STATIC PROTOTYPE - This Teacher Portal is for HCI demonstration only. Backend is not connected.
+          </span>
+        </div>
+
         {/* Main */}
         <main
           style={{

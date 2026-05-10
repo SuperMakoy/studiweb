@@ -7,18 +7,18 @@ import TeacherMobileHeader from "@/components/teacher/teacher-mobile-header"
 
 // Static mock data for prototype
 const MOCK_QUIZZES = [
-  { id: "1", title: "Introduction to Biology", questions: 15, difficulty: "easy", status: "published", date: "2025-01-08", students: 24 },
-  { id: "2", title: "World History Chapter 5", questions: 20, difficulty: "moderate", status: "published", date: "2025-01-07", students: 18 },
-  { id: "3", title: "Mathematics Fundamentals", questions: 25, difficulty: "hard", status: "published", date: "2025-01-06", students: 31 },
-  { id: "4", title: "English Literature Review", questions: 12, difficulty: "easy", status: "draft", date: "2025-01-05", students: 0 },
-  { id: "5", title: "Chemistry Basics", questions: 18, difficulty: "moderate", status: "published", date: "2025-01-04", students: 22 },
-  { id: "6", title: "Physics Motion Laws", questions: 20, difficulty: "hard", status: "draft", date: "2025-01-03", students: 0 },
-  { id: "7", title: "Geography Continents", questions: 10, difficulty: "easy", status: "published", date: "2025-01-02", students: 15 },
-  { id: "8", title: "Computer Science Intro", questions: 15, difficulty: "moderate", status: "published", date: "2025-01-01", students: 28 },
-  { id: "9", title: "Art History Renaissance", questions: 12, difficulty: "moderate", status: "draft", date: "2024-12-30", students: 0 },
-  { id: "10", title: "Music Theory Basics", questions: 8, difficulty: "easy", status: "published", date: "2024-12-28", students: 12 },
-  { id: "11", title: "Economics 101", questions: 22, difficulty: "hard", status: "published", date: "2024-12-25", students: 19 },
-  { id: "12", title: "Psychology Concepts", questions: 16, difficulty: "moderate", status: "draft", date: "2024-12-20", students: 0 },
+  { id: "1", title: "Introduction to Biology", questions: 15, difficulty: "easy", status: "published", date: "2025-01-08" },
+  { id: "2", title: "World History Chapter 5", questions: 20, difficulty: "moderate", status: "published", date: "2025-01-07" },
+  { id: "3", title: "Mathematics Fundamentals", questions: 25, difficulty: "hard", status: "published", date: "2025-01-06" },
+  { id: "4", title: "English Literature Review", questions: 12, difficulty: "easy", status: "draft", date: "2025-01-05" },
+  { id: "5", title: "Chemistry Basics", questions: 18, difficulty: "moderate", status: "published", date: "2025-01-04" },
+  { id: "6", title: "Physics Motion Laws", questions: 20, difficulty: "hard", status: "draft", date: "2025-01-03" },
+  { id: "7", title: "Geography Continents", questions: 10, difficulty: "easy", status: "published", date: "2025-01-02" },
+  { id: "8", title: "Computer Science Intro", questions: 15, difficulty: "moderate", status: "published", date: "2025-01-01" },
+  { id: "9", title: "Art History Renaissance", questions: 12, difficulty: "moderate", status: "draft", date: "2024-12-30" },
+  { id: "10", title: "Music Theory Basics", questions: 8, difficulty: "easy", status: "published", date: "2024-12-28" },
+  { id: "11", title: "Economics 101", questions: 22, difficulty: "hard", status: "published", date: "2024-12-25" },
+  { id: "12", title: "Psychology Concepts", questions: 16, difficulty: "moderate", status: "draft", date: "2024-12-20" },
 ]
 
 const DIFF_CONFIG = {
@@ -113,6 +113,15 @@ export default function TeacherQuizzesPage() {
           transform: translateY(-2px);
         }
 
+        .tc-proto-banner {
+          background: linear-gradient(90deg, rgba(255,212,59,0.15), rgba(255,212,59,0.05));
+          border: 1px solid rgba(255,212,59,0.3);
+          border-radius: 8px;
+          padding: 8px 14px;
+          display: flex; align-items: center; gap: 8px;
+          margin-bottom: 16px;
+        }
+
         @keyframes tcFadeUp {
           from { opacity: 0; transform: translateY(10px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -198,6 +207,12 @@ export default function TeacherQuizzesPage() {
 
           {/* Content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+            <div className="tc-proto-banner">
+              <span style={{ fontSize: 16 }}>⚠️</span>
+              <span style={{ fontSize: 12, color: "#FFD43B", fontWeight: 500 }}>
+                STATIC PROTOTYPE - This section demonstrates the Teacher Portal UI. Backend functionality is not connected.
+              </span>
+            </div>
             {filteredQuizzes.length === 0 ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 300, gap: 12 }}>
                 <div style={{ fontSize: 40, opacity: 0.3 }}>📝</div>
@@ -242,12 +257,6 @@ export default function TeacherQuizzesPage() {
                           <div style={{ fontSize: 18, fontWeight: 700, color: "#58d68d" }}>{quiz.questions}</div>
                           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>Questions</div>
                         </div>
-                        {quiz.status === "published" && (
-                          <div>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: "#7f9fff" }}>{quiz.students}</div>
-                            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>Students</div>
-                          </div>
-                        )}
                       </div>
 
                       {/* Difficulty badge */}

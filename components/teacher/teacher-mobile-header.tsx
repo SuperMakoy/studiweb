@@ -16,10 +16,11 @@ export default function TeacherMobileHeader() {
 
   const navItems = [
     { label: "Dashboard", path: "/teacher/dashboard" },
+    { label: "File Library", path: "/teacher/library" },
+    { label: "Create Quiz", path: "/teacher/create-quiz" },
     { label: "All Quizzes", path: "/teacher/quizzes" },
     { label: "Published", path: "/teacher/published" },
     { label: "Drafts", path: "/teacher/drafts" },
-    { label: "Students", path: "/teacher/students" },
     { label: "Analytics", path: "/teacher/analytics" },
     { label: "Profile", path: "/teacher/profile" },
   ]

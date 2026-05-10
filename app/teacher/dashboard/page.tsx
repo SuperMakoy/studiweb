@@ -125,67 +125,160 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f5f5", padding: "40px 24px" }}>
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%)",
+      color: "#fff",
+      padding: "40px 24px",
+    }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40 }}>
+        {/* Header with Logout */}
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 48,
+        }}>
           <div>
-            <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Teacher Dashboard</h1>
-            <p style={{ color: "#666" }}>Create and manage quizzes for your students</p>
+            <h1 style={{
+              fontSize: 40,
+              fontWeight: 800,
+              marginBottom: 8,
+              letterSpacing: -0.5,
+              background: "linear-gradient(135deg, #fff 0%, #9baeff 100%)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}>
+              Create Quizzes
+            </h1>
+            <p style={{
+              fontSize: 16,
+              color: "rgba(255, 255, 255, 0.5)",
+              marginTop: 8,
+            }}>
+              Iteratively craft the perfect quiz aligned with Bloom's Taxonomy
+            </p>
           </div>
-          <Link href="/" style={{
-            padding: "10px 20px",
-            background: "#e0e0e0",
-            borderRadius: 8,
-            textDecoration: "none",
-            color: "#000",
-            fontSize: 14,
-            fontWeight: 500,
-          }}>
-            Logout
+          <Link
+            href="/"
+            style={{
+              padding: "11px 24px",
+              background: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(91, 110, 232, 0.3)",
+              borderRadius: 10,
+              textDecoration: "none",
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 0.3s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(91, 110, 232, 0.15)"
+              e.currentTarget.style.borderColor = "rgba(91, 110, 232, 0.5)"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)"
+              e.currentTarget.style.borderColor = "rgba(91, 110, 232, 0.3)"
+            }}
+          >
+            ← Logout
           </Link>
         </div>
 
         {/* Upload Section */}
-        <div style={{
-          background: "#fff",
-          border: "2px dashed #ccc",
-          borderRadius: 12,
-          padding: 40,
-          textAlign: "center",
-          marginBottom: 40,
-        }}>
+        <div
+          style={{
+            background: "rgba(91, 110, 232, 0.08)",
+            border: "2px dashed rgba(91, 110, 232, 0.3)",
+            borderRadius: 16,
+            padding: 48,
+            textAlign: "center",
+            marginBottom: 48,
+            backdropFilter: "blur(10px)",
+          }}
+        >
           {uploadError && (
-            <div style={{
-              background: "#ffebee",
-              border: "1px solid #ffcdd2",
-              color: "#c62828",
-              padding: "12px 16px",
-              borderRadius: 6,
-              marginBottom: 20,
-              textAlign: "left",
-            }}>
+            <div
+              style={{
+                background: "rgba(255, 107, 107, 0.12)",
+                border: "1px solid rgba(255, 107, 107, 0.3)",
+                color: "#ff6b6b",
+                padding: "14px 18px",
+                borderRadius: 8,
+                marginBottom: 24,
+                fontSize: 14,
+              }}
+            >
               {uploadError}
             </div>
           )}
-          <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth={2} style={{ margin: "0 auto 16px" }}>
-            <path d="M12 2v20M2 12h20" />
-          </svg>
-          <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Upload Study Material</h3>
-          <p style={{ color: "#666", marginBottom: 20 }}>
-            Upload a document (PDF, DOCX, TXT) to create quizzes
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              margin: "0 auto 20px",
+              background: "rgba(91, 110, 232, 0.15)",
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <svg
+              width={28}
+              height={28}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#9baeff"
+              strokeWidth={2}
+            >
+              <path d="M12 2v20M2 12h20" />
+            </svg>
+          </div>
+          <h3
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              marginBottom: 10,
+              letterSpacing: -0.3,
+            }}
+          >
+            Upload Your Study Material
+          </h3>
+          <p
+            style={{
+              fontSize: 14,
+              color: "rgba(255, 255, 255, 0.5)",
+              marginBottom: 24,
+              maxWidth: 420,
+              margin: "0 auto 24px",
+            }}
+          >
+            Add PDF, DOCX, or TXT documents. We'll help you craft a quiz aligned with Bloom's Taxonomy
           </p>
-          <label style={{
-            display: "inline-block",
-            padding: "12px 28px",
-            background: isUploading ? "#999" : "#5B6EE8",
-            color: "#fff",
-            borderRadius: 8,
-            cursor: isUploading ? "not-allowed" : "pointer",
-            fontWeight: 600,
-            opacity: isUploading ? 0.7 : 1,
-          }}>
-            {isUploading ? "Uploading..." : "Choose File"}
+          <label
+            style={{
+              display: "inline-block",
+              padding: "14px 32px",
+              background: isUploading
+                ? "rgba(91, 110, 232, 0.5)"
+                : "linear-gradient(135deg, #5B6EE8, #7b5ea7)",
+              color: "#fff",
+              borderRadius: 12,
+              cursor: isUploading ? "not-allowed" : "pointer",
+              fontWeight: 600,
+              fontSize: 15,
+              border: "none",
+              boxShadow: isUploading
+                ? "none"
+                : "0 6px 20px rgba(91, 110, 232, 0.4)",
+              transition: "all 0.3s",
+              opacity: isUploading ? 0.7 : 1,
+            }}
+          >
+            {isUploading ? "📤 Uploading..." : "📤 Choose File"}
             <input
               ref={fileInputRef}
               type="file"
@@ -197,71 +290,156 @@ export default function TeacherDashboard() {
           </label>
         </div>
 
-        {/* Files List */}
+        {/* Files Grid */}
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>Your Files</h2>
-          
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              marginBottom: 24,
+              letterSpacing: -0.3,
+            }}
+          >
+            {fileLoading ? "Loading..." : `Your Files (${files.length})`}
+          </h2>
+
           {fileLoading ? (
-            <p style={{ textAlign: "center", color: "#999" }}>Loading files...</p>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "rgba(255, 255, 255, 0.3)",
+              }}
+            >
+              Loading files...
+            </div>
           ) : files.length === 0 ? (
-            <p style={{ textAlign: "center", color: "#999", padding: "40px 20px" }}>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "rgba(255, 255, 255, 0.3)",
+              }}
+            >
               No files yet. Upload one to get started.
-            </p>
+            </div>
           ) : (
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-              gap: 20,
-            }}>
-              {files.map(file => (
-                <div key={file.id} style={{
-                  background: "#fff",
-                  border: "1px solid #e0e0e0",
-                  borderRadius: 12,
-                  padding: 20,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
-                }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: 20,
+              }}
+            >
+              {files.map((file) => (
+                <div
+                  key={file.id}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(91, 110, 232, 0.2)",
+                    borderRadius: 14,
+                    padding: 24,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 16,
+                    backdropFilter: "blur(10px)",
+                    transition: "all 0.3s",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)"
+                    e.currentTarget.style.borderColor = "rgba(91, 110, 232, 0.4)"
+                    e.currentTarget.style.transform = "translateY(-2px)"
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"
+                    e.currentTarget.style.borderColor = "rgba(91, 110, 232, 0.2)"
+                    e.currentTarget.style.transform = "translateY(0)"
+                  }}
+                >
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
+                    <div
+                      style={{
+                        fontSize: 28,
+                        marginBottom: 12,
+                      }}
+                    >
+                      📄
+                    </div>
+                    <h3
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 600,
+                        marginBottom: 6,
+                      }}
+                    >
                       {file.displayName || file.fileName}
                     </h3>
-                    <p style={{ fontSize: 12, color: "#999" }}>
-                      {(file.fileSize / 1024).toFixed(2)} KB
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "rgba(255, 255, 255, 0.4)",
+                      }}
+                    >
+                      {(file.fileSize / 1024).toFixed(1)} KB
                     </p>
                   </div>
-                  <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      marginTop: "auto",
+                    }}
+                  >
                     <Link
                       href={`/teacher/create-quiz/${file.id}`}
                       style={{
                         flex: 1,
-                        padding: "10px 16px",
-                        background: "#5B6EE8",
+                        padding: "11px 16px",
+                        background: "linear-gradient(135deg, #5B6EE8, #7b5ea7)",
                         color: "#fff",
-                        borderRadius: 6,
+                        borderRadius: 10,
                         textDecoration: "none",
                         textAlign: "center",
-                        fontSize: 14,
-                        fontWeight: 500,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        border: "none",
+                        cursor: "pointer",
+                        transition: "all 0.3s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = "0.85"
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = "1"
                       }}
                     >
-                      Create Quiz
+                      ✏️ Create Quiz
                     </Link>
                     <button
                       onClick={() => handleDeleteFile(file.id)}
                       style={{
-                        padding: "10px 16px",
-                        background: "#f0f0f0",
-                        border: "none",
-                        borderRadius: 6,
+                        padding: "11px 16px",
+                        background: "rgba(255, 107, 107, 0.1)",
+                        border: "1px solid rgba(255, 107, 107, 0.2)",
+                        borderRadius: 10,
                         cursor: "pointer",
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: 500,
-                        color: "#d32f2f",
+                        color: "#ff6b6b",
+                        transition: "all 0.3s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 107, 107, 0.2)"
+                        e.currentTarget.style.borderColor = "rgba(255, 107, 107, 0.4)"
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 107, 107, 0.1)"
+                        e.currentTarget.style.borderColor = "rgba(255, 107, 107, 0.2)"
                       }}
                     >
-                      Delete
+                      🗑️ Delete
                     </button>
                   </div>
                 </div>
@@ -270,23 +448,36 @@ export default function TeacherDashboard() {
           )}
         </div>
 
-        {/* My Quizzes Link */}
-        <div style={{ marginTop: 60, textAlign: "center" }}>
-          <Link
-            href="/teacher/my-quizzes"
-            style={{
-              display: "inline-block",
-              padding: "12px 28px",
-              background: "#27ae60",
-              color: "#fff",
-              borderRadius: 8,
-              textDecoration: "none",
-              fontWeight: 600,
-            }}
-          >
-            View My Quizzes
-          </Link>
-        </div>
+        {/* My Quizzes Button */}
+        {files.length > 0 && (
+          <div style={{ marginTop: 60, textAlign: "center" }}>
+            <Link
+              href="/teacher/my-quizzes"
+              style={{
+                display: "inline-block",
+                padding: "14px 40px",
+                background: "linear-gradient(135deg, #51CF66, #37b24d)",
+                color: "#fff",
+                borderRadius: 12,
+                textDecoration: "none",
+                fontWeight: 600,
+                fontSize: 15,
+                boxShadow: "0 6px 20px rgba(81, 207, 102, 0.3)",
+                transition: "all 0.3s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "0.9"
+                e.currentTarget.style.transform = "translateY(-2px)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "1"
+                e.currentTarget.style.transform = "translateY(0)"
+              }}
+            >
+              📚 View My Quizzes
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )

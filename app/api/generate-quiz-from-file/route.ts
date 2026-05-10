@@ -146,7 +146,7 @@ function repairJSON(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { fileId, userId, length = 10, difficulty = "moderate", content, fileName: providedFileName } = await request.json()
+    const { fileId, userId, length = 10, difficulty = "moderate", content, fileName: providedFileName, isTeacher = false } = await request.json()
 
     if (!fileId || !userId) {
       return NextResponse.json({ error: "Missing fileId or userId" }, { status: 400 })
@@ -160,8 +160,9 @@ export async function POST(request: NextRequest) {
       extractedContent = content
       fileName = providedFileName || "Evaluation File"
     } else {
-      // Normal flow: fetch from Firebase
-      const fileDoc = doc(db, "users", userId, "files", fileId)
+      // Determine which collection to fetch from based on user type
+      const collection_path = isTeacher ? "teacherFiles" : "files"
+      const fileDoc = doc(db, "users", userId, collection_path, fileId)
       const fileSnapshot = await getDoc(fileDoc)
 
       if (!fileSnapshot.exists()) {

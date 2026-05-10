@@ -28,6 +28,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            if (typeof window !== 'undefined' && typeof Object.defineProperty === 'function') {
+              try {
+                Object.defineProperty(window, 'ethereum', {
+                  value: undefined,
+                  writable: true,
+                  configurable: true
+                });
+              } catch (e) {
+                // Silently ignore errors from extension conflicts
+              }
+            }
+          `
+        }} />
+      </head>
       <body className={`font-sans antialiased`}>
         {children}
         <Analytics />

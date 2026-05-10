@@ -34,6 +34,8 @@ export default function CreateQuizPage() {
   const [error, setError] = useState<string | null>(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [quizTitle, setQuizTitle] = useState("")
+  const [numQuestions, setNumQuestions] = useState(10)
+  const [difficulty, setDifficulty] = useState<"easy" | "moderate" | "hard">("moderate")
 
   // Check auth and role
   useEffect(() => {
@@ -54,11 +56,11 @@ export default function CreateQuizPage() {
     checkRole()
   }, [user, authLoading, router])
 
-  // Load file and generate quiz if not exists
+  // Load file only (don't auto-generate quiz)
   useEffect(() => {
     if (!user || userRole !== "teacher" || !fileId) return
 
-    const loadFileAndQuiz = async () => {
+    const loadFile = async () => {
       try {
         setIsLoading(true)
         setError(null)
@@ -71,19 +73,8 @@ export default function CreateQuizPage() {
         }
 
         setFile(teacherFile)
-
-        // Check if quiz already exists by trying to load it
-        // For now, we'll generate a new one
-        // In future, could check if draft exists
-        setIsGenerating(true)
-        const newQuiz = await generateTeacherQuiz(fileId, teacherFile.displayName || teacherFile.fileName, {
-          length: 10,
-          difficulty: "moderate",
-        })
-        setQuiz(newQuiz)
-        setQuizTitle(newQuiz.title)
       } catch (err) {
-        console.error("[v0] Error loading file/quiz:", err)
+        console.error("[v0] Error loading file:", err)
         setError(err instanceof Error ? err.message : "Failed to load file")
       } finally {
         setIsLoading(false)
@@ -95,6 +86,27 @@ export default function CreateQuizPage() {
   }, [user, userRole, fileId])
 
   const currentQuestion = quiz?.questions[currentQuestionIndex]
+
+  const handleGenerateQuiz = async () => {
+    if (!file) return
+
+    try {
+      setIsGenerating(true)
+      setError(null)
+      const newQuiz = await generateTeacherQuiz(fileId, file.displayName || file.fileName, {
+        length: numQuestions,
+        difficulty,
+      })
+      setQuiz(newQuiz)
+      setQuizTitle(newQuiz.title)
+      setCurrentQuestionIndex(0)
+    } catch (err) {
+      console.error("[v0] Error generating quiz:", err)
+      setError(err instanceof Error ? err.message : "Failed to generate quiz")
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   const handleQuestionChange = (field: keyof TeacherQuestion, value: any) => {
     if (!quiz) return
@@ -187,10 +199,174 @@ export default function CreateQuizPage() {
     )
   }
 
-  if (!quiz || !currentQuestion) {
+  if (!file) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
-        <p>Failed to load quiz</p>
+        <p>File not found</p>
+      </div>
+    )
+  }
+
+  // If no quiz yet, show preferences screen
+  if (!quiz) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%)",
+        color: "#fff",
+        padding: "40px 24px",
+      }}>
+        <div style={{ maxWidth: 600, margin: "0 auto" }}>
+          <Link
+            href="/teacher/dashboard"
+            style={{
+              color: "#9baeff",
+              textDecoration: "none",
+              fontSize: 14,
+              marginBottom: 32,
+              display: "inline-block",
+            }}
+          >
+            ← Back to Dashboard
+          </Link>
+
+          <div style={{ marginBottom: 48 }}>
+            <h1 style={{
+              fontSize: 36,
+              fontWeight: 800,
+              marginBottom: 12,
+              letterSpacing: -0.5,
+            }}>
+              Generate Quiz
+            </h1>
+            <p style={{
+              fontSize: 16,
+              color: "rgba(255, 255, 255, 0.5)",
+            }}>
+              From: {file.displayName || file.fileName}
+            </p>
+          </div>
+
+          {error && (
+            <div style={{
+              background: "rgba(255, 107, 107, 0.12)",
+              border: "1px solid rgba(255, 107, 107, 0.3)",
+              color: "#ff6b6b",
+              padding: "16px",
+              borderRadius: 10,
+              marginBottom: 32,
+            }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{
+            background: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(91, 110, 232, 0.2)",
+            borderRadius: 14,
+            padding: 32,
+            backdropFilter: "blur(10px)",
+          }}>
+            <div style={{ marginBottom: 28 }}>
+              <label style={{
+                display: "block",
+                fontSize: 14,
+                fontWeight: 600,
+                marginBottom: 12,
+                color: "rgba(255, 255, 255, 0.7)",
+              }}>
+                Number of Questions
+              </label>
+              <input
+                type="number"
+                min="5"
+                max="50"
+                value={numQuestions}
+                onChange={(e) => setNumQuestions(Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
+                style={{
+                  width: "100%",
+                  padding: "11px 16px",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(91, 110, 232, 0.2)",
+                  borderRadius: 10,
+                  color: "#fff",
+                  fontSize: 14,
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 32 }}>
+              <label style={{
+                display: "block",
+                fontSize: 14,
+                fontWeight: 600,
+                marginBottom: 12,
+                color: "rgba(255, 255, 255, 0.7)",
+              }}>
+                Difficulty Level
+              </label>
+              <div style={{ display: "flex", gap: 12 }}>
+                {(["easy", "moderate", "hard"] as const).map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => setDifficulty(level)}
+                    style={{
+                      flex: 1,
+                      padding: "11px 16px",
+                      background: difficulty === level
+                        ? "linear-gradient(135deg, #5B6EE8, #7b5ea7)"
+                        : "rgba(255, 255, 255, 0.08)",
+                      border: difficulty === level
+                        ? "1px solid rgba(91, 110, 232, 0.5)"
+                        : "1px solid rgba(91, 110, 232, 0.2)",
+                      borderRadius: 10,
+                      color: "#fff",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.3s",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={handleGenerateQuiz}
+              disabled={isGenerating}
+              style={{
+                width: "100%",
+                padding: "14px 24px",
+                background: isGenerating
+                  ? "rgba(91, 110, 232, 0.5)"
+                  : "linear-gradient(135deg, #5B6EE8, #7b5ea7)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: isGenerating ? "not-allowed" : "pointer",
+                opacity: isGenerating ? 0.7 : 1,
+                transition: "all 0.3s",
+                boxShadow: isGenerating ? "none" : "0 6px 20px rgba(91, 110, 232, 0.4)",
+              }}
+            >
+              {isGenerating ? "Generating..." : "Generate Quiz"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!currentQuestion) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <p>No questions found</p>
       </div>
     )
   }

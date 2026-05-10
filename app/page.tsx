@@ -253,6 +253,7 @@ export default function LandingPage() {
             <a href="#about" className="sp-nav-link">About</a>
             <a href="#taxonomy" className="sp-nav-link">Taxonomy</a>
             <a href="#team" className="sp-nav-link">Team</a>
+            <a href="/teacher-login" className="sp-nav-eval">Teacher →</a>
             <a href="/evaluator/login" className="sp-nav-eval">Evaluator →</a>
           </div>
         </nav>

@@ -453,6 +453,10 @@ export default function LandingPage() {
           <div className="sp-footer-logo">STU<em>DI</em></div>
           <p>© 2025 STUDI — Central Mindanao University Capstone Project</p>
           <p style={{marginTop:8}}>Made with purpose · <a href="/evaluator/login">Evaluator access →</a></p>
+          {/* Secret teacher portal link */}
+          <div style={{marginTop:14, fontSize:10, opacity:0.15, transition:"opacity 0.3s ease"}} onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.5")} onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.15")}>
+            <a href="/teacher/login" style={{color:"rgba(255,255,255,0.4)", textDecoration:"none", fontWeight:500}}>◆ Educator Portal</a>
+          </div>
         </footer>
 
       </div>

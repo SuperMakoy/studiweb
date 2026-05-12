@@ -119,7 +119,6 @@ export default function LandingPage() {
         }
         .sp-hero-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 
-        /* Top half: headline + wheel side by side */
         .sp-hero-top {
           position: relative; z-index: 2;
           display: flex; align-items: center; justify-content: center;
@@ -199,6 +198,24 @@ export default function LandingPage() {
 
         .sp-err { background: rgba(220,53,69,0.14); border: 1px solid rgba(220,53,69,0.3); color: #ff8f8f; border-radius: 9px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
         .sp-hr { border: none; border-top: 1px solid rgba(255,255,255,0.06); }
+
+        /* Teacher portal link below card */
+        .sp-teacher-link {
+          position: relative; z-index: 2;
+          margin-top: 14px;
+          text-align: center;
+        }
+        .sp-teacher-link a {
+          font-size: 11px;
+          color: rgba(255,255,255,0.18);
+          text-decoration: none;
+          font-weight: 500;
+          letter-spacing: 0.5px;
+          transition: color .3s ease;
+        }
+        .sp-teacher-link a:hover {
+          color: rgba(255,255,255,0.5);
+        }
 
         /* Sections */
         .sp-sec { padding: 80px 24px; max-width: 880px; margin: 0 auto; }
@@ -306,11 +323,11 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right: SpinWheel — fully isolated, no shared state with auth */}
+            {/* Right: SpinWheel */}
             <SpinWheel />
           </div>
 
-          {/* ── Auth card below ── */}
+          {/* ── Auth card ── */}
           <div className="sp-card">
             <div className="sp-tabs">
               <button type="button" className={`sp-tab${tab==="login"?" on":""}`} onClick={() => switchTab("login")}>Sign in</button>
@@ -378,6 +395,12 @@ export default function LandingPage() {
               </form>
             )}
           </div>
+
+          {/* ── Teacher portal link — sits just below the auth card ── */}
+          <div className="sp-teacher-link">
+            <a href="/teacher/login">◆ Educator Portal</a>
+          </div>
+
         </section>
 
         {/* ── About ── */}

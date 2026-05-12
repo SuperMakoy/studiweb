@@ -233,6 +233,9 @@ export default function LandingPage() {
         .sp-footer p { font-size: 13px; color: rgba(255,255,255,0.28); margin-top: 6px; }
         .sp-footer a { color: #7f9fff; text-decoration: none; }
         .sp-footer a:hover { text-decoration: underline; }
+        .sp-teacher-link { opacity: 0.15; transition: opacity 0.3s ease; font-size: 10px; margin-top: 14px; }
+        .sp-teacher-link:hover { opacity: 0.5; }
+        .sp-teacher-link a { color: rgba(255,255,255,0.4); text-decoration: none; font-weight: 500; }
 
         @media (max-width: 700px) {
           .sp-nav { padding: 14px 20px; }
@@ -454,8 +457,8 @@ export default function LandingPage() {
           <p>© 2025 STUDI — Central Mindanao University Capstone Project</p>
           <p style={{marginTop:8}}>Made with purpose · <a href="/evaluator/login">Evaluator access →</a></p>
           {/* Secret teacher portal link */}
-          <div style={{marginTop:14, fontSize:10, opacity:0.15, transition:"opacity 0.3s ease"}} onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.5")} onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.15")}>
-            <a href="/teacher/login" style={{color:"rgba(255,255,255,0.4)", textDecoration:"none", fontWeight:500}}>◆ Educator Portal</a>
+          <div className="sp-teacher-link">
+            <a href="/teacher/login">◆ Educator Portal</a>
           </div>
         </footer>
 

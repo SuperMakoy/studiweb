@@ -1,4 +1,5 @@
 import { generateText } from "ai"
+import { groq } from "@ai-sdk/groq"
 
 export async function POST(request: Request) {
   try {
@@ -41,7 +42,7 @@ ABSOLUTE RULES - FOLLOW EXACTLY:
 Return only the JSON object.`
 
     const { text } = await generateText({
-      model: "groq/mixtral-8x7b-32768",
+      model: groq("llama-3.3-70b-versatile"),
       system: systemPrompt,
       prompt: `Study Material:\n${fileContent}`,
     })

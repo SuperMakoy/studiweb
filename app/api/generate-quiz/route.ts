@@ -42,7 +42,7 @@ ABSOLUTE RULES - FOLLOW EXACTLY:
 Return only the JSON object.`
 
     const { text } = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
+      model: groq(process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-120b"),
       system: systemPrompt,
       prompt: `Study Material:\n${fileContent}`,
     })

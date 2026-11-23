@@ -1,4 +1,5 @@
 import { generateText } from "ai"
+import { groq } from "@ai-sdk/groq"
 import { getFileContent } from "@/lib/file-service"
 
 export async function POST(request: Request) {
@@ -42,7 +43,7 @@ ${conversationContext}
 Respond naturally and helpfully to the student's question.`
 
     const { text } = await generateText({
-      model: "groq/llama-3.3-70b-versatile",
+      model: groq(process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-120b"),
       system: systemPrompt,
       prompt: `Student's Question: ${message}`,
     })

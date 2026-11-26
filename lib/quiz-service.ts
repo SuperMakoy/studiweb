@@ -1,3 +1,5 @@
+import { auth } from "@/lib/firebase"
+
 export interface Question {
   id: number
   question: string
@@ -19,10 +21,14 @@ export interface QuizOptions {
 export async function generateQuizFromFile(fileId: string, userId: string, options?: QuizOptions): Promise<Quiz> {
   try {
     console.log("[v0] Calling quiz generation API for file:", fileId, "with options:", options)
+    const user = auth.currentUser
+    if (!user || user.uid !== userId) throw new Error("Please sign in to STUDI")
+    const token = await user.getIdToken()
     const response = await fetch("/api/generate-quiz-from-file", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         fileId,

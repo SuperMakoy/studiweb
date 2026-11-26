@@ -1,7 +1,8 @@
 // API route to generate quiz from uploaded file
 import { type NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/firebase"
-import { doc, getDoc, collection, addDoc, Timestamp } from "firebase/firestore"
+import { BackendError, isDocumentId, studentBackend } from "@/lib/server-firestore"
+
+export const runtime = "nodejs"
 import { extractFileContent } from "@/lib/file-extraction-service"
 
 // Anderson & Krathwohl Taxonomy distribution percentages
@@ -146,36 +147,21 @@ function repairJSON(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { fileId, userId, length = 10, difficulty = "moderate", content, fileName: providedFileName } = await request.json()
-
-    if (!fileId || !userId) {
-      return NextResponse.json({ error: "Missing fileId or userId" }, { status: 400 })
+    const backend = await studentBackend(request)
+    const { fileId, userId, length = 10, difficulty = "moderate", content } = await request.json()
+    if (userId !== undefined && userId !== backend.uid) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
-
-    let extractedContent: string
-    let fileName: string
-
-    // If content is provided directly (evaluator mode), use it
-    if (content) {
-      extractedContent = content
-      fileName = providedFileName || "Evaluation File"
-    } else {
-      // Normal flow: fetch from Firebase
-      const fileDoc = doc(db, "users", userId, "files", fileId)
-      const fileSnapshot = await getDoc(fileDoc)
-
-      if (!fileSnapshot.exists()) {
-        return NextResponse.json({ error: "File not found" }, { status: 404 })
-      }
-
-      const fileData = fileSnapshot.data()
-      const { fileData: base64Data, fileType, fileName: storedFileName } = fileData
-      fileName = storedFileName
-
-      // Extract content from file
-      console.log("[v0] Extracting content from", fileName)
-      extractedContent = await extractFileContent(base64Data, fileType, fileName)
+    if (content !== undefined) {
+      return NextResponse.json({ error: "Direct evaluator uploads require authorized evaluator access" }, { status: 403 })
     }
+    if (!isDocumentId(fileId) || ![5, 10, 20].includes(length) ||
+        !["easy", "moderate", "hard"].includes(difficulty)) {
+      return NextResponse.json({ error: "Invalid quiz options" }, { status: 400 })
+    }
+    const file = await backend.readOwnedFile(fileId)
+    const fileName = file.fileName
+    const extractedContent = await extractFileContent(file.fileData, file.fileType, fileName)
 
     if (!extractedContent || extractedContent.length === 0) {
       return NextResponse.json({ error: "No content extracted from file" }, { status: 400 })
@@ -267,7 +253,7 @@ Rules:
         const repairedJSON = repairJSON(text)
         quizData = JSON.parse(repairedJSON)
       } catch (repairError) {
-        console.error("[v0] JSON repair failed. Original response:", text.substring(0, 1000))
+        console.error("[STUDI] JSON repair failed")
         throw new Error("Failed to parse AI response as JSON")
       }
     }
@@ -275,25 +261,15 @@ Rules:
     // Ensure fileName is set correctly
     quizData.fileName = fileName
 
-    // Save quiz to generatedQuizzes collection for evaluation
-    try {
-      await addDoc(collection(db, "generatedQuizzes"), {
-        fileId,
-        userId,
-        fileName,
-        difficulty,
-        questions: quizData.questions,
-        createdAt: Timestamp.now(),
-        evaluationStatus: "pending",
-      })
-    } catch (saveError) {
-      console.error("[v0] Error saving quiz for evaluation:", saveError)
-      // Don't fail the request if saving fails
+    if (!Array.isArray(quizData.questions) || quizData.questions.length === 0) {
+      throw new BackendError(502, "Quiz generation returned no questions")
     }
+    await backend.saveGeneratedQuiz({ fileId, fileName, difficulty, questions: quizData.questions })
 
     return NextResponse.json(quizData)
   } catch (error: any) {
-    console.error("[v0] Error generating quiz:", error)
-    return NextResponse.json({ error: error.message || "Failed to generate quiz" }, { status: 500 })
+    if (error instanceof BackendError) return NextResponse.json({ error: error.message }, { status: error.status })
+    console.error("[STUDI] Quiz generation failed", error instanceof Error ? error.name : "unknown")
+    return NextResponse.json({ error: "Failed to generate quiz" }, { status: 500 })
   }
 }
